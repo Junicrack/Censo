@@ -377,7 +377,7 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
 var KEY = "censo.registros.v2";       // copia local de los registros (nube + pendientes)
 var KEY_VIEJO = "censo.registros.v1"; // registros de antes de la nube
 var SUPA_URL = "https://aodaaclzvzbntrdnwxtc.supabase.co";
-var SUPA_KEY = "sb_publishable_i7JbNRkswFefreVcyd_lPg_83CUGs8x";
+var SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvZGFhY2x6dnpibnRyZG53eHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU1NTE4NDIsImV4cCI6MjExMTEyNzg0Mn0.iVKSWSkXra177BtwayUbPZqB-JM0wsltUf71qwpm0xE"; // clave pública (anon)
 var DOMINIO = "censo.app";
 var $ = function(s, r){ return (r||document).querySelector(s); };
 var $$ = function(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
@@ -1059,7 +1059,7 @@ $("#fLogin").addEventListener("submit", function(e){
   if(!navigator.onLine){ $("#loginErr").textContent = "Necesitas internet para entrar."; return; }
   $("#loginErr").textContent = "Entrando…";
   sb.auth.signInWithPassword({ email: u+"@"+DOMINIO, password: c }).then(function(res){
-    if(res.error){ $("#loginErr").textContent = /invalid/i.test(res.error.message) ? "Usuario o clave incorrectos" : /banned/i.test(res.error.message) ? "Este usuario está desactivado" : res.error.message; return; }
+    if(res.error){ $("#loginErr").textContent = /fetch|network/i.test(res.error.message) ? "No se pudo conectar con el servidor. Revisa tu internet." : /invalid/i.test(res.error.message) ? "Usuario o clave incorrectos" : /banned/i.test(res.error.message) ? "Este usuario está desactivado" : res.error.message; return; }
     sesionId = res.data.user.id; perfil = null;
     return leerPerfilYConfig().then(function(ok){ if(ok){ $("#fLogin").reset(); $("#loginErr").textContent=""; entrar(res.data.user); } });
   }).catch(function(err){ $("#loginErr").textContent = "No se pudo conectar: "+err.message; });
