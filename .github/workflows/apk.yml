@@ -25,7 +25,7 @@ jobs:
             echo "::error::Faltan los secretos CENSO_KEYSTORE_BASE64 y CENSO_KEYSTORE_PASSWORD (Settings > Secrets and variables > Actions)."
             exit 1
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/censo.keystore"
+          printf '%s' "$KEYSTORE_BASE64" | tr -d ' \r\n\t' | base64 -d > "$RUNNER_TEMP/censo.keystore"
 
       - name: Marcar la versión dentro de la app
         run: |
