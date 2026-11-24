@@ -106,6 +106,17 @@ fieldset:disabled .seg button,fieldset:disabled .chips label{opacity:.6;cursor:n
 .uitem select{width:auto;padding:6px 8px;font-size:14px}
 .estado-censo{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .estado-censo b{font-size:18px}
+.qitem{display:grid;grid-template-columns:1fr;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.qitem:last-child{border-bottom:0}
+.qitem .acc{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-start;align-items:center}
+.qitem.off b{color:var(--muted);text-decoration:line-through}
+.frow{display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center}
+@media (max-width:520px){.frow{grid-template-columns:1fr 1fr}.frow .fval{grid-column:1/2}}
+.frow select,.frow input{padding:8px;font-size:14px}
+.colsel{display:flex;flex-wrap:wrap;gap:6px;max-height:260px;overflow:auto;padding:4px 0}
+.colsel label{font-size:14px;padding:7px 11px}
+.prev{overflow-x:auto;margin-top:10px}
+.extra-h{grid-column:1/-1;margin:6px 0 0;font-size:15px;color:var(--brand-dark)}
 details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-top:12px}
 </style>
 </head>
@@ -218,6 +229,11 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
       <button type="button" class="btn sec" id="addMiembro">+ Agregar persona</button>
     </div>
 
+    <div class="card hide" id="cardExtraViv">
+      <h2>Preguntas adicionales de la vivienda</h2>
+      <div class="grid" id="extraViv"></div>
+    </div>
+
     <div class="card">
       <h2>Observaciones</h2>
       <div class="grid">
@@ -282,6 +298,22 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
     <p class="muted" style="margin-top:0">Un archivo .xlsx con tres hojas: <b>Resumen</b> (totales y tablas), <b>Viviendas</b> (una fila por casa) y <b>Personas</b> (una fila por persona). Usa el filtro por sector del Resumen si quieres un solo sector.</p>
     <button class="btn" id="expXlsx" type="button">Descargar Excel</button>
   </div>
+  <div class="card" data-rol="manager admin" id="cardMedida">
+    <h2>Exportación a medida</h2>
+    <p class="muted" style="margin-top:0">Elige qué columnas quieres y qué filas (por ejemplo, solo mayores de edad). Se descarga en Excel.</p>
+    <div class="grid">
+      <div><label>¿Qué exportar?</label><select id="xNivel"><option value="p">Personas (una fila por persona)</option><option value="v">Viviendas (una fila por casa)</option></select></div>
+      <div><label>Título del archivo (opcional)</label><input id="xTitulo" placeholder="ej. Mayores de edad con cédula"></div>
+    </div>
+    <label style="margin-top:14px">Columnas <a href="#" id="xTodas" style="font-weight:400">todas</a> · <a href="#" id="xNinguna" style="font-weight:400">ninguna</a></label>
+    <div class="colsel chips" id="xCols"></div>
+    <label style="margin-top:14px">Filtros (se deben cumplir todos)</label>
+    <div id="xFiltros"></div>
+    <div class="row"><button class="btn sec sm" type="button" id="xAddFiltro">+ Agregar filtro</button> <button class="btn sec sm" type="button" id="xEjemplo">Ejemplo: nombre, edad, teléfono y cédula de mayores de edad</button></div>
+    <p class="muted" id="xCuenta" style="margin:12px 0 0"></p>
+    <div class="prev" id="xPrev"></div>
+    <div class="row" style="margin-top:12px"><button class="btn" type="button" id="xDescargar">Descargar Excel a medida</button></div>
+  </div>
   <div class="card">
     <h2>Respaldo</h2>
     <p class="muted" style="margin-top:0">Copia de seguridad en formato JSON de los registros que ves en este teléfono.</p>
@@ -308,6 +340,22 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
       <div><b id="estadoCenso">—</b><div class="muted" id="estadoCensoDet"></div></div>
       <button class="btn" id="btnCenso" type="button">—</button>
     </div>
+  </div>
+  <div class="card">
+    <h2>Preguntas del formulario</h2>
+    <p class="muted" style="margin-top:0">Agrega preguntas propias. Aparecen en el formulario de todos los censadores en cuanto sincronizan.</p>
+    <form id="fPregunta" class="grid">
+      <input type="hidden" name="id">
+      <div class="full"><label>Pregunta</label><input name="texto" required placeholder="ej. ¿Recibe algún programa social?"></div>
+      <div><label>¿A quién se le pregunta?</label><select name="ambito" required><option value="persona">A cada persona</option><option value="vivienda">A la vivienda</option></select></div>
+      <div><label>Tipo de respuesta</label><select name="tipo" required>
+        <option value="opcion">Selección única (una opción)</option><option value="casillas">Casillas (varias opciones)</option><option value="sino">Sí / No</option>
+        <option value="texto">Texto libre</option><option value="numero">Número</option><option value="fecha">Fecha</option></select></div>
+      <div class="full" id="pOpcionesBox"><label>Opciones (una por línea)</label><textarea name="opciones" rows="4" placeholder="Supérate&#10;Bono Gas&#10;Ninguno"></textarea></div>
+      <div class="full"><div class="chips"><label><input type="checkbox" name="obligatoria">Respuesta obligatoria</label></div></div>
+      <div class="full row"><button class="btn" type="submit" id="pGuardar">Agregar pregunta</button><button class="btn sec hide" type="button" id="pCancelar">Cancelar edición</button></div>
+    </form>
+    <div id="listaPreguntas" style="margin-top:12px"></div>
   </div>
   <div class="card">
     <h2>Crear usuario</h2>
@@ -364,6 +412,7 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
         <select data-k="seguro"><option></option><option>Sí, SENASA</option><option>Sí, privado / ARS</option><option>No</option></select></div>
       <div class="full"><label>¿Tiene alguna discapacidad o condición de salud?</label><input data-k="salud" placeholder="Dejar vacío si no"></div>
     </div>
+    <div class="grid extraPer" style="margin-top:14px"></div>
   </div>
 </template>
 
@@ -431,6 +480,7 @@ function addMiembro(data){
   th.addEventListener("change", function(){ if(th.value==="No") hj.value=0; });
   hj.addEventListener("input", function(){ if(+hj.value>0){ th.value="Sí"; syncSeg(node); } });
   segmentar(node);
+  pintarExtras($(".extraPer", node), "persona", data && data.extra);
   $("#miembros").appendChild(node);
   syncSeg(node);
   numerar();
@@ -454,7 +504,7 @@ function segmentar(root){
     sel.dataset.seg = "1";
     var box = document.createElement("div"); box.className="seg";
     opts.forEach(function(o){
-      var b=document.createElement("button"); b.type="button"; b.textContent=o.value; b.dataset.v=o.value;
+      var b=document.createElement("button"); b.type="button"; b.textContent=o.text||o.value; b.dataset.v=o.value;
       b.addEventListener("click", function(){
         sel.value = (sel.value===o.value) ? "" : o.value;
         sel.dispatchEvent(new Event("change",{bubbles:true}));
@@ -471,6 +521,48 @@ function syncSeg(root){
     $$("button", box).forEach(function(b){ b.classList.toggle("on", b.dataset.v===sel.value); });
   });
 }
+
+/* ---------- preguntas creadas por el admin ---------- */
+var PREGS = []; try { PREGS = JSON.parse(localStorage.getItem("censo.preguntas")||"[]"); } catch(e){}
+var TIPOS = { opcion:"Selección única", casillas:"Casillas", sino:"Sí / No", texto:"Texto", numero:"Número", fecha:"Fecha" };
+function pregsActivas(ambito){ return PREGS.filter(function(q){ return q.activa && q.ambito===ambito; }).sort(function(a,b){ return a.orden-b.orden; }); }
+function htmlPreg(q){
+  var req = q.obligatoria ? ' <span class="req">*</span>' : '', r = q.obligatoria ? ' required' : '';
+  var lab = '<label>'+esc(q.texto)+req+'</label>', ops = q.tipo==="sino" ? ["Sí","No"] : (q.opciones||[]);
+  var campo;
+  if(q.tipo==="opcion" || q.tipo==="sino") campo = '<select data-q="'+q.id+'"'+r+'><option></option>'+ops.map(function(o){return '<option>'+esc(o)+'</option>'}).join("")+'</select>';
+  else if(q.tipo==="casillas") campo = '<div class="chips" data-q="'+q.id+'" data-tipo="casillas"'+(q.obligatoria?' data-req="1"':'')+'>'+ops.map(function(o){return '<label><input type="checkbox" value="'+esc(o)+'">'+esc(o)+'</label>'}).join("")+'</div>';
+  else if(q.tipo==="numero") campo = '<input type="number" inputmode="decimal" data-q="'+q.id+'"'+r+'>';
+  else if(q.tipo==="fecha") campo = '<input type="date" data-q="'+q.id+'"'+r+'>';
+  else campo = '<input data-q="'+q.id+'"'+r+'>';
+  return '<div class="'+(q.tipo==="casillas"||q.tipo==="texto"?"full":"")+'">'+lab+campo+'</div>';
+}
+function pintarExtras(cont, ambito, valores){
+  var qs = pregsActivas(ambito);
+  cont.innerHTML = (ambito==="persona" && qs.length ? '<div class="extra-h">Preguntas adicionales</div>' : '') + qs.map(htmlPreg).join("");
+  segmentar(cont); llenarExtras(cont, valores||{}); syncSeg(cont);
+}
+function leerExtras(cont){
+  var o = {};
+  $$("[data-q]", cont).forEach(function(el){
+    if(el.dataset.tipo==="casillas") o[el.dataset.q] = $$("input:checked", el).map(function(c){return c.value});
+    else { var v = el.value.trim(); o[el.dataset.q] = (el.type==="number" && v!=="") ? +v : v; }
+  });
+  return o;
+}
+function llenarExtras(cont, val){
+  $$("[data-q]", cont).forEach(function(el){
+    var v = val[el.dataset.q]; if(v==null) return;
+    if(el.dataset.tipo==="casillas") $$("input", el).forEach(function(c){ c.checked = Array.isArray(v) && v.indexOf(c.value)>=0; });
+    else el.value = v;
+  });
+}
+function faltanCasillas(){
+  var falta = $$('#f [data-tipo="casillas"][data-req="1"]').filter(function(el){ return !$$("input:checked", el).length; });
+  if(falta.length){ toast("Falta responder: "+falta[0].parentNode.querySelector("label").textContent.replace(" *","")); falta[0].scrollIntoView({block:"center"}); return true; }
+  return false;
+}
+function textoRespuesta(v){ return Array.isArray(v) ? v.join("; ") : (v==null ? "" : v); }
 
 /* ---------- formulario ---------- */
 var f = $("#f");
@@ -500,6 +592,7 @@ function resetForm(){
   f.fecha.value = hoy();
   f.encuestador.value = perfil ? perfil.nombre : "";
   $("#btnGuardar").textContent="Guardar registro";
+  pintarExtras($("#extraViv"), "vivienda", {}); $("#cardExtraViv").classList.toggle("hide", !pregsActivas("vivienda").length);
   condiciones();
   aplicarBloqueo();
 }
@@ -511,6 +604,7 @@ function fillForm(r){
   condiciones();
   $("#miembros").innerHTML="";
   (r.miembros && r.miembros.length ? r.miembros : [{}]).forEach(addMiembro);
+  pintarExtras($("#extraViv"), "vivienda", r.extra);
   $("#btnGuardar").textContent="Guardar cambios";
 }
 f.addEventListener("submit", function(e){
@@ -524,8 +618,10 @@ f.addEventListener("submit", function(e){
     miembros: $$("#miembros .member").map(function(m){
       var o={}; $$("[data-k]", m).forEach(function(el){ o[el.dataset.k] = el.value.trim(); });
       if(o.edad!=="") o.edad = +o.edad; if(o.hijos!=="") o.hijos = +o.hijos;
+      o.extra = leerExtras($(".extraPer", m));
       return o;
     }),
+    extra: leerExtras($("#extraViv")),
     actualizado: new Date().toISOString()
   };
   // Solo se guardan las preguntas que estaban a la vista
@@ -536,7 +632,12 @@ f.addEventListener("submit", function(e){
   });
   ["aguaMaxSin","luzRegresa","luzMaxSin"].forEach(function(k){ if(r[k]==="") r[k+"Unidad"]=""; });
   if(!puedeEscribir()){ toast("El ingreso de datos está cerrado"); return; }
+  if(faltanCasillas()) return;
   var i = db.findIndex(function(x){return x.id===r.id});
+  if(i>=0){ // conservar respuestas de preguntas que ya no están activas
+    r.extra = Object.assign({}, db[i].extra||{}, r.extra);
+    r.miembros.forEach(function(m,j){ var ant = (db[i].miembros||[])[j]; if(ant && ant.nombre===m.nombre) m.extra = Object.assign({}, ant.extra||{}, m.extra); });
+  }
   if(i>=0){ r.creado = db[i].creado; r._censador = db[i]._censador; r._censadorId = db[i]._censadorId; db[i]=r; }
   else { r.creado = r.actualizado; r._censador = perfil.nombre; r._censadorId = sesionId; db.push(r); }
   r._pend = true; delete r._err;
@@ -687,6 +788,16 @@ var VARS = [
   {g:"Viviendas", k:"aguaPozo", t:"¿Tiene pozo?", p:0, f:function(m,r){return r.aguaPozo}, o:["Sí","No"]},
   {g:"Viviendas", k:"luzFrec", t:"¿Cada cuánto se va la luz?", p:0, f:function(m,r){return r.luzFrecuencia}, o:["No se va","Varias veces al día","Una vez al día","Varias veces por semana","Una vez por semana","Rara vez (al mes o menos)"]}
 ];
+var VARS_BASE = VARS.slice();
+function actualizarVarsGraficas(){
+  var extra = PREGS.filter(function(q){ return ["opcion","sino"].indexOf(q.tipo)>=0; }).map(function(q){
+    return { g: q.ambito==="persona" ? "Personas" : "Viviendas", k:"x_"+q.id, t:q.texto, p: q.ambito==="persona" ? 1 : 0,
+      f: q.ambito==="persona" ? function(m){ return (m.extra||{})[q.id]; } : function(m,r){ return (r.extra||{})[q.id]; },
+      o: q.tipo==="sino" ? ["Sí","No"] : q.opciones };
+  });
+  VARS = VARS_BASE.concat(extra);
+  if($("#gVar").options.length){ var a=$("#gVar").value, c=$("#gCruce").value; $("#gVar").innerHTML = opcionesVars(false); $("#gCruce").innerHTML = opcionesVars(true); $("#gVar").value = varPor(a)?a:"edad"; $("#gCruce").value = varPor(c)?c:""; }
+}
 function varPor(k){ return VARS.filter(function(v){return v.k===k})[0]; }
 function opcionesVars(conNinguna){
   var html = conNinguna ? '<option value="">— No separar —</option>' : "";
@@ -696,6 +807,7 @@ function opcionesVars(conNinguna){
   return html;
 }
 function initCreador(){
+  actualizarVarsGraficas();
   $("#gVar").innerHTML = opcionesVars(false);
   $("#gCruce").innerHTML = opcionesVars(true);
   $("#gVar").value = "edad";
@@ -972,6 +1084,11 @@ function leerPerfilYConfig(){
   return sb.from("perfiles").select("usuario,nombre,rol,activo").eq("id", sesionId).maybeSingle().then(function(res){
     if(res.error) throw res.error;
     if(!res.data || !res.data.activo){ cerrarSesion("Tu usuario fue desactivado. Habla con el administrador."); return false; }
+    sb.from("preguntas").select("*").order("orden").then(function(q){
+      if(q.error || !q.data) return;
+      var antes = JSON.stringify(PREGS); PREGS = q.data; localStorage.setItem("censo.preguntas", JSON.stringify(PREGS));
+      if(antes !== JSON.stringify(PREGS)){ actualizarVarsGraficas(); refrescarFormSiVacio(); if(!$("#tab-admin").classList.contains("hide")) pintarPreguntas(); pintarColumnas(); }
+    });
     var cambioRol = !perfil || perfil.rol!==res.data.rol;
     perfil = res.data; localStorage.setItem("censo.perfil", JSON.stringify(perfil));
     pintarUsuario(); if(cambioRol) show(TABS[perfil.rol][0]);
@@ -1084,6 +1201,7 @@ function leerError(r){
 
 /* ---------- pestaña Datos ---------- */
 function renderDatos(){
+  if(perfil && perfil.rol!=="censador") pintarColumnas();
   var pend = db.filter(function(r){return r._pend && !r._err}).length, err = db.filter(function(r){return r._err}).length;
   $("#syncDetalle").textContent = (navigator.onLine ? "Con señal. " : "Sin señal: los registros se guardan en el teléfono y suben solos al volver la señal. ") +
     (pend ? pend+" registro(s) pendiente(s) de subir. " : "Todo subido. ") + (err ? err+" no se pudieron subir (ver Registros). " : "") +
@@ -1099,6 +1217,66 @@ $("#btnMigrar").addEventListener("click", function(){
   agregarPendientes(viejos);
   localStorage.setItem(KEY_VIEJO+".subido", localStorage.getItem(KEY_VIEJO)); localStorage.removeItem(KEY_VIEJO);
   toast(viejos.length+" registros listos para subir"); renderDatos(); sincronizar();
+});
+
+function refrescarFormSiVacio(){
+  // solo se redibuja si el formulario no tiene datos a medio llenar
+  if(soloLectura || f.id.value || f.sector.value || $('#miembros [data-k="nombre"]').value) return;
+  resetForm();
+}
+
+/* ---------- Admin: preguntas ---------- */
+var fp = $("#fPregunta");
+function tipoPregCambio(){ $("#pOpcionesBox").classList.toggle("hide", ["opcion","casillas"].indexOf(fp.tipo.value)<0); }
+fp.tipo.addEventListener("change", tipoPregCambio);
+function limpiarFormPregunta(){ fp.reset(); fp.id.value=""; $("#pGuardar").textContent="Agregar pregunta"; $("#pCancelar").classList.add("hide"); tipoPregCambio(); }
+$("#pCancelar").addEventListener("click", limpiarFormPregunta);
+function cargarPreguntas(){
+  return sb.from("preguntas").select("*").order("orden").then(function(q){
+    if(q.error){ toast(q.error.message); return; }
+    PREGS = q.data; localStorage.setItem("censo.preguntas", JSON.stringify(PREGS));
+    pintarPreguntas(); actualizarVarsGraficas(); refrescarFormSiVacio(); pintarColumnas();
+  });
+}
+function pintarPreguntas(){
+  var qs = PREGS.slice().sort(function(a,b){ return a.orden-b.orden; });
+  $("#listaPreguntas").innerHTML = qs.length ? qs.map(function(q){
+    return '<div class="qitem'+(q.activa?'':' off')+'"><div><b>'+esc(q.texto)+'</b>'+(q.obligatoria?' <span class="pill">obligatoria</span>':'')+(q.activa?'':' <span class="pill err">oculta</span>')+
+      '<div class="muted">'+(q.ambito==="persona"?"A cada persona":"A la vivienda")+' · '+TIPOS[q.tipo]+((q.opciones||[]).length?': '+esc(q.opciones.join(", ")):'')+'</div></div>'+
+      '<div class="acc"><button class="btn sec sm" data-qm="'+q.id+'" data-d="-1" title="Subir">↑</button><button class="btn sec sm" data-qm="'+q.id+'" data-d="1" title="Bajar">↓</button>'+
+      '<button class="btn sec sm" data-qe="'+q.id+'">Editar</button><button class="btn sm '+(q.activa?'danger':'')+'" data-qa="'+q.id+'">'+(q.activa?'Ocultar':'Mostrar')+'</button><button class="btn danger sm" data-qb="'+q.id+'">Borrar</button></div></div>';
+  }).join("") : '<p class="muted">Todavía no hay preguntas propias.</p>';
+}
+fp.addEventListener("submit", function(e){
+  e.preventDefault();
+  if(!navigator.onLine){ toast("Necesitas internet"); return; }
+  var ops = fp.opciones.value.split("\n").map(function(x){return x.trim()}).filter(Boolean);
+  ops = ops.filter(function(x,i){ return ops.indexOf(x)===i; });
+  if(["opcion","casillas"].indexOf(fp.tipo.value)>=0 && ops.length<2){ toast("Escribe al menos 2 opciones, una por línea"); return; }
+  var datos = { texto: fp.texto.value.trim(), ambito: fp.ambito.value, tipo: fp.tipo.value, opciones: ["opcion","casillas"].indexOf(fp.tipo.value)>=0 ? ops : [], obligatoria: fp.obligatoria.checked };
+  var q = fp.id.value ? sb.from("preguntas").update(datos).eq("id", fp.id.value)
+                      : sb.from("preguntas").insert(Object.assign(datos, { orden: PREGS.reduce(function(m,x){return Math.max(m,x.orden)},0)+1 }));
+  q.then(function(res){
+    if(res.error){ toast("No se pudo guardar: "+res.error.message); return; }
+    toast(fp.id.value ? "Pregunta actualizada" : "Pregunta agregada"); limpiarFormPregunta(); cargarPreguntas();
+  });
+});
+$("#listaPreguntas").addEventListener("click", function(e){
+  var t = e.target, q;
+  if(t.dataset.qe){ q = PREGS.filter(function(x){return x.id===t.dataset.qe})[0];
+    fp.id.value=q.id; fp.texto.value=q.texto; fp.ambito.value=q.ambito; fp.tipo.value=q.tipo; fp.opciones.value=(q.opciones||[]).join("\n"); fp.obligatoria.checked=q.obligatoria;
+    syncSeg(fp); tipoPregCambio(); $("#pGuardar").textContent="Guardar cambios"; $("#pCancelar").classList.remove("hide"); fp.scrollIntoView({block:"start"}); return; }
+  if(!navigator.onLine && (t.dataset.qa||t.dataset.qb||t.dataset.qm)){ toast("Necesitas internet"); return; }
+  if(t.dataset.qa){ q = PREGS.filter(function(x){return x.id===t.dataset.qa})[0];
+    sb.from("preguntas").update({activa:!q.activa}).eq("id",q.id).then(function(r){ if(r.error) toast(r.error.message); else cargarPreguntas(); }); }
+  if(t.dataset.qb && confirm("¿Borrar esta pregunta? Las respuestas ya guardadas se conservan en los registros, pero dejarán de verse en el Excel. Si solo quieres quitarla del formulario, usa Ocultar.")){
+    sb.from("preguntas").delete().eq("id",t.dataset.qb).then(function(r){ if(r.error) toast(r.error.message); else cargarPreguntas(); }); }
+  if(t.dataset.qm){
+    var lista = PREGS.slice().sort(function(a,b){ return a.orden-b.orden; }), i = lista.findIndex(function(x){return x.id===t.dataset.qm}), j = i + (+t.dataset.d);
+    if(j<0 || j>=lista.length) return;
+    var a = lista[i], b = lista[j];
+    Promise.all([sb.from("preguntas").update({orden:b.orden===a.orden ? b.orden+(+t.dataset.d) : b.orden}).eq("id",a.id), sb.from("preguntas").update({orden:a.orden}).eq("id",b.id)]).then(cargarPreguntas);
+  }
 });
 
 /* ---------- pestaña Admin ---------- */
@@ -1119,7 +1297,8 @@ $("#btnCenso").addEventListener("click", function(){
   });
 });
 function renderAdmin(){
-  pintarEstadoCenso();
+  pintarEstadoCenso(); pintarPreguntas(); segmentar(fp); tipoPregCambio();
+  if(navigator.onLine) cargarPreguntas();
   if(!navigator.onLine){ $("#listaUsuarios").innerHTML = '<p class="muted">Necesitas internet para ver los usuarios.</p>'; return; }
   sb.from("perfiles").select("id,usuario,nombre,rol,activo,creado").order("creado").then(function(res){
     if(res.error){ $("#listaUsuarios").innerHTML = '<p class="muted">'+esc(res.error.message)+'</p>'; return; }
@@ -1154,6 +1333,207 @@ $("#fUsuario").addEventListener("submit", function(e){
     .then(function(ok){ if(ok){ $("#uErr").textContent=""; toast("Usuario creado: "+fm.usuario.value.trim().toLowerCase()); fm.reset(); syncSeg(fm); } });
 });
 
+/* ---------- Exportación a medida ---------- */
+function campo(k,t,tipo,get,ops){ return {k:k,t:t,tipo:tipo,get:get,ops:ops}; }
+function camposExport(nivel){
+  var C = [];
+  var fechaReg = function(r){ return r.fecha||""; };
+  if(nivel==="p"){
+    C.push(campo("nombre","Nombre completo","texto",function(x){return x.m.nombre}),
+      campo("edad","Edad","num",function(x){return x.m.edad}),
+      campo("gedad","Grupo de edad","cat",function(x){return grupoEdad(x.m.edad)},ORD_EDAD),
+      campo("sexo","Sexo","cat",function(x){return x.m.sexo}),
+      campo("cedula","Cédula","texto",function(x){return x.m.cedula}),
+      campo("telefono","Teléfono","texto",function(x){return x.m.telefono}),
+      campo("nacimiento","Fecha de nacimiento","fecha",function(x){return x.m.nacimiento}),
+      campo("parentesco","Parentesco","cat",function(x){return x.m.parentesco}),
+      campo("estadoCivil","Estado civil","cat",function(x){return x.m.estadoCivil}),
+      campo("nacionalidad","Nacionalidad","cat",function(x){return x.m.nacionalidad}),
+      campo("alfabetizado","¿Sabe leer y escribir?","cat",function(x){return x.m.alfabetizado},["Sí","No"]),
+      campo("estudia","¿Estudia?","cat",function(x){return x.m.estudia},["Sí","No"]),
+      campo("nivel","Nivel educativo","cat",function(x){return x.m.nivel},ORD_NIVEL),
+      campo("trabaja","Trabajo","cat",function(x){return x.m.trabaja}),
+      campo("ocupacion","Ocupación","texto",function(x){return x.m.ocupacion}),
+      campo("tieneHijos","¿Tiene hijos?","cat",function(x){return x.m.tieneHijos || (+x.m.hijos>0?"Sí":"")},["Sí","No"]),
+      campo("hijos","Cantidad de hijos","num",function(x){return x.m.hijos}),
+      campo("religion","Religión","cat",function(x){return x.m.religion}),
+      campo("seguro","Seguro médico","cat",function(x){return x.m.seguro}),
+      campo("salud","Discapacidad / salud","texto",function(x){return x.m.salud}));
+    pregsTodas("persona").forEach(function(q){ C.push(campoPreg(q, function(x){ return (x.m.extra||{})[q.id]; }, "")); });
+  }
+  C.push(campo("sector","Sector / barrio","cat",function(x){return x.r.sector}),
+    campo("vivienda","No. vivienda","texto",function(x){return x.r.vivienda}),
+    campo("direccion","Dirección","texto",function(x){return x.r.direccion}));
+  if(nivel==="v"){
+    C.push(campo("jefe","Jefe(a) de hogar","texto",function(x){return ((x.r.miembros||[])[0]||{}).nombre}),
+      campo("telJefe","Teléfono del jefe(a)","texto",function(x){return ((x.r.miembros||[])[0]||{}).telefono}),
+      campo("npers","Personas registradas","num",function(x){return (x.r.miembros||[]).length}),
+      campo("tipoVivienda","Tipo de vivienda","cat",function(x){return x.r.tipoVivienda}),
+      campo("tenencia","Tenencia","cat",function(x){return x.r.tenencia}),
+      campo("alquiler","Alquiler mensual (RD$)","num",function(x){return +x.r.alquiler>0 ? +x.r.alquiler : ""}),
+      campo("viveSolo","¿Vive solo(a)?","cat",function(x){return x.r.viveSolo},["Sí","No"]),
+      campo("agua","Agua potable","cat",function(x){return tieneServ(x.r,"Agua potable")},["Sí","No"]),
+      campo("aguaF","¿Cada qué tiempo llega el agua?","cat",function(x){return x.r.aguaSiempre==="Sí"?"Siempre hay agua":x.r.aguaFrecuencia}),
+      campo("cisterna","Cisterna","cat",function(x){return x.r.aguaCisterna},["Sí","No"]),
+      campo("pozo","Pozo","cat",function(x){return x.r.aguaPozo},["Sí","No"]),
+      campo("luz","Electricidad","cat",function(x){return tieneServ(x.r,"Electricidad")},["Sí","No"]),
+      campo("luzF","¿Cada cuánto se va la luz?","cat",function(x){return x.r.luzFrecuencia}),
+      campo("internet","Internet","cat",function(x){return tieneServ(x.r,"Internet")},["Sí","No"]),
+      campo("notas","Notas","texto",function(x){return x.r.notas}));
+  }
+  pregsTodas("vivienda").forEach(function(q){ C.push(campoPreg(q, function(x){ return (x.r.extra||{})[q.id]; }, nivel==="p" ? "Vivienda: " : "")); });
+  C.push(campo("censador","Censador(a)","cat",function(x){return x.r._censador || x.r.encuestador}),
+    campo("fecha","Fecha del registro","fecha",fechaReg && function(x){return x.r.fecha}));
+  return C;
+}
+function pregsTodas(ambito){ return PREGS.filter(function(q){return q.ambito===ambito}).sort(function(a,b){return a.orden-b.orden}); }
+function campoPreg(q, get, pref){
+  var tipo = q.tipo==="numero" ? "num" : q.tipo==="fecha" ? "fecha" : q.tipo==="texto" ? "texto" : q.tipo==="casillas" ? "multi" : "cat";
+  return campo("x_"+q.id, pref+q.texto, tipo, get, q.tipo==="sino" ? ["Sí","No"] : q.opciones);
+}
+var OPS = { num:[["ge","es mayor o igual a"],["le","es menor o igual a"],["eq","es igual a"],["lleno","tiene dato"],["vacio","está vacío"]],
+  cat:[["eq","es"],["ne","no es"],["lleno","tiene dato"],["vacio","está vacío"]],
+  multi:[["inc","incluye"],["ninc","no incluye"],["lleno","tiene dato"],["vacio","está vacío"]],
+  texto:[["has","contiene"],["lleno","tiene dato"],["vacio","está vacío"]],
+  fecha:[["ge","desde"],["le","hasta"],["lleno","tiene dato"],["vacio","está vacío"]] };
+var xCfg = { nivel:"p", cols:["nombre","edad","telefono","cedula","sector"], filtros:[] };
+try { var _x = JSON.parse(localStorage.getItem("censo.medida")||"null"); if(_x && _x.cols) xCfg = _x; } catch(e){}
+function guardarCfg(){ try { localStorage.setItem("censo.medida", JSON.stringify(xCfg)); } catch(e){} }
+function filasNivel(nivel){
+  var sector = $("#filtroSector").value, out = [];
+  db.forEach(function(r){ if(sector && r.sector!==sector) return;
+    if(nivel==="p") (r.miembros||[]).forEach(function(m){ out.push({m:m, r:r}); }); else out.push({r:r}); });
+  return out;
+}
+function vacio(v){ return v==null || v==="" || (Array.isArray(v) && !v.length) || (typeof v==="number" && isNaN(v)); }
+function cumple(fl, c, x){
+  var v = c.get(x), w = fl.v;
+  switch(fl.op){
+    case "lleno": return !vacio(v);
+    case "vacio": return vacio(v);
+    case "ge": return c.tipo==="fecha" ? (!vacio(v) && String(v)>=w) : (!vacio(v) && +v >= +w);
+    case "le": return c.tipo==="fecha" ? (!vacio(v) && String(v)<=w) : (!vacio(v) && +v <= +w);
+    case "eq": return c.tipo==="num" ? (!vacio(v) && +v === +w) : String(v==null?"":v)===w;
+    case "ne": return String(v==null?"":v)!==w;
+    case "inc": return Array.isArray(v) && v.indexOf(w)>=0;
+    case "ninc": return !(Array.isArray(v) && v.indexOf(w)>=0);
+    case "has": return String(v==null?"":v).toLowerCase().indexOf(String(w).toLowerCase())>=0;
+  }
+  return true;
+}
+function resultadoMedida(){
+  var C = camposExport(xCfg.nivel), porK = {}; C.forEach(function(c){ porK[c.k]=c; });
+  var cols = xCfg.cols.map(function(k){return porK[k]}).filter(Boolean);
+  var fil = xCfg.filtros.filter(function(fl){ return porK[fl.k] && (fl.op==="lleno"||fl.op==="vacio"||fl.v!==""); });
+  var filas = filasNivel(xCfg.nivel).filter(function(x){ return fil.every(function(fl){ return cumple(fl, porK[fl.k], x); }); });
+  return { C:C, cols:cols, filtros:fil, filas:filas, porK:porK };
+}
+function valoresObservados(c){
+  var set = {}; (c.ops||[]).forEach(function(o){ set[o]=1; });
+  filasNivel(xCfg.nivel).forEach(function(x){ var v = c.get(x); if(Array.isArray(v)) v.forEach(function(y){ set[y]=1; }); else if(!vacio(v)) set[v]=1; });
+  var orden = c.ops || []; return Object.keys(set).sort(function(a,b){ var i=orden.indexOf(a), j=orden.indexOf(b); return (i<0?999:i)-(j<0?999:j) || a.localeCompare(b); });
+}
+function pintarColumnas(){
+  if(!$("#xCols")) return;
+  var C = camposExport(xCfg.nivel);
+  $("#xNivel").value = xCfg.nivel;
+  $("#xCols").innerHTML = C.map(function(c){ return '<label><input type="checkbox" value="'+c.k+'"'+(xCfg.cols.indexOf(c.k)>=0?' checked':'')+'>'+esc(c.t)+'</label>'; }).join("");
+  pintarFiltros();
+}
+function pintarFiltros(){
+  var C = camposExport(xCfg.nivel), porK = {}; C.forEach(function(c){ porK[c.k]=c; });
+  $("#xFiltros").innerHTML = xCfg.filtros.map(function(fl,i){
+    var c = porK[fl.k] || C[0]; fl.k = c.k;
+    var ops = OPS[c.tipo]; if(!ops.some(function(o){return o[0]===fl.op})) fl.op = ops[0][0];
+    var sinValor = fl.op==="lleno" || fl.op==="vacio", val;
+    if(sinValor) val = '<span></span>';
+    else if(c.tipo==="cat" || c.tipo==="multi") val = '<select class="fval" data-i="'+i+'" data-p="v"><option value=""></option>'+valoresObservados(c).map(function(o){return '<option'+(o===fl.v?' selected':'')+'>'+esc(o)+'</option>'}).join("")+'</select>';
+    else val = '<input class="fval" data-i="'+i+'" data-p="v" type="'+(c.tipo==="num"?"number":c.tipo==="fecha"?"date":"text")+'" value="'+esc(fl.v)+'">';
+    return '<div class="frow"><select data-i="'+i+'" data-p="k">'+C.map(function(x){return '<option value="'+x.k+'"'+(x.k===c.k?' selected':'')+'>'+esc(x.t)+'</option>'}).join("")+'</select>'+
+      '<select data-i="'+i+'" data-p="op">'+ops.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===fl.op?' selected':'')+'>'+o[1]+'</option>'}).join("")+'</select>'+
+      val+'<button class="btn danger sm" type="button" data-quitar="'+i+'">✕</button></div>';
+  }).join("");
+  previsualizar();
+}
+function valorCelda(c, x){
+  var v = c.get(x);
+  if(Array.isArray(v)) return v.join("; ");
+  if(vacio(v)) return null;
+  if(c.tipo==="num") return isNaN(+v) ? v : +v;
+  if(c.tipo==="fecha") return /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(v+"T12:00:00") : v;
+  return v;
+}
+function describirFiltros(res){
+  return res.filtros.map(function(fl){ var c = res.porK[fl.k], op = OPS[c.tipo].filter(function(o){return o[0]===fl.op})[0][1]; return c.t+" "+op+(fl.op==="lleno"||fl.op==="vacio" ? "" : " "+fl.v); }).join(" · ");
+}
+function previsualizar(){
+  var res = resultadoMedida();
+  $("#xCuenta").textContent = res.filas.length + (xCfg.nivel==="p" ? " persona(s)" : " vivienda(s)") + " cumplen los filtros" + ($("#filtroSector").value ? " (sector "+$("#filtroSector").value+")" : "") + ".";
+  if(!res.cols.length){ $("#xPrev").innerHTML = '<p class="muted">Elige al menos una columna.</p>'; return; }
+  var muestra = res.filas.slice(0,5);
+  $("#xPrev").innerHTML = '<table class="tbl"><thead><tr>'+res.cols.map(function(c){return '<th style="text-align:left">'+esc(c.t)+'</th>'}).join("")+'</tr></thead><tbody>'+
+    muestra.map(function(x){ return '<tr>'+res.cols.map(function(c){ var v = c.get(x); return '<td style="text-align:left">'+esc(Array.isArray(v)?v.join("; "):v)+'</td>'; }).join("")+'</tr>'; }).join("")+'</tbody></table>'+
+    (res.filas.length>5 ? '<p class="muted" style="margin:6px 0 0">… y '+(res.filas.length-5)+' más</p>' : '');
+}
+$("#xNivel").addEventListener("change", function(){
+  xCfg.nivel = this.value; var keys = camposExport(xCfg.nivel).map(function(c){return c.k});
+  xCfg.cols = xCfg.cols.filter(function(k){return keys.indexOf(k)>=0}); if(!xCfg.cols.length) xCfg.cols = keys.slice(0,4);
+  xCfg.filtros = xCfg.filtros.filter(function(fl){return keys.indexOf(fl.k)>=0}); guardarCfg(); pintarColumnas();
+});
+$("#xCols").addEventListener("change", function(){
+  var marcadas = $$("#xCols input:checked").map(function(c){return c.value});
+  // mantiene el orden en que se marcaron
+  xCfg.cols = xCfg.cols.filter(function(k){return marcadas.indexOf(k)>=0}).concat(marcadas.filter(function(k){return xCfg.cols.indexOf(k)<0}));
+  guardarCfg(); previsualizar();
+});
+$("#xTodas").addEventListener("click", function(e){ e.preventDefault(); xCfg.cols = camposExport(xCfg.nivel).map(function(c){return c.k}); guardarCfg(); pintarColumnas(); });
+$("#xNinguna").addEventListener("click", function(e){ e.preventDefault(); xCfg.cols = []; guardarCfg(); pintarColumnas(); });
+$("#xAddFiltro").addEventListener("click", function(){ xCfg.filtros.push({k: xCfg.nivel==="p" ? "edad" : "sector", op:"", v:""}); guardarCfg(); pintarFiltros(); });
+$("#xEjemplo").addEventListener("click", function(){
+  xCfg = { nivel:"p", cols:["nombre","edad","telefono","cedula","sector"], filtros:[{k:"edad",op:"ge",v:"18"}] };
+  $("#xTitulo").value = "Mayores de edad"; guardarCfg(); pintarColumnas();
+});
+$("#xFiltros").addEventListener("change", function(e){
+  var t = e.target, i = t.dataset.i; if(i==null) return;
+  var fl = xCfg.filtros[+i]; fl[t.dataset.p] = t.value; if(t.dataset.p==="k"){ fl.op=""; fl.v=""; }
+  guardarCfg(); if(t.dataset.p==="v") previsualizar(); else pintarFiltros();
+});
+$("#xFiltros").addEventListener("input", function(e){ var t=e.target; if(t.dataset.p==="v" && t.tagName==="INPUT"){ xCfg.filtros[+t.dataset.i].v = t.value; guardarCfg(); previsualizar(); } });
+$("#xFiltros").addEventListener("click", function(e){ var q = e.target.dataset.quitar; if(q!=null){ xCfg.filtros.splice(+q,1); guardarCfg(); pintarFiltros(); } });
+$("#xDescargar").addEventListener("click", function(){
+  var res = resultadoMedida();
+  if(!res.cols.length){ toast("Elige al menos una columna"); return; }
+  if(!res.filas.length){ toast("Ninguna fila cumple los filtros"); return; }
+  toast("Preparando Excel…");
+  cargarExcelJS().then(function(){
+    var wb = new ExcelJS.Workbook(); wb.creator = "Censo Comunitario";
+    var ws = wb.addWorksheet("Datos", {views:[{state:"frozen", ySplit:4}]});
+    var titulo = $("#xTitulo").value.trim() || ("Censo — " + (xCfg.nivel==="p" ? "Personas" : "Viviendas"));
+    ws.getCell("A1").value = titulo; ws.getCell("A1").font = {bold:true, size:16, color:{argb:"FF0F7A5C"}};
+    ws.getCell("A2").value = res.filas.length + (xCfg.nivel==="p" ? " personas" : " viviendas") + ($("#filtroSector").value ? " · Sector: "+$("#filtroSector").value : "") + " · Generado el " + new Date().toLocaleString("es-DO");
+    ws.getCell("A3").value = res.filtros.length ? "Filtros: " + describirFiltros(res) : "Sin filtros";
+    ws.getCell("A2").font = ws.getCell("A3").font = {color:{argb:"FF56616D"}};
+    var cab = ws.getRow(4); cab.values = ["No."].concat(res.cols.map(function(c){return c.t}));
+    cab.eachCell(function(c){ c.font={bold:true,color:{argb:"FFFFFFFF"}}; c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0F7A5C"}}; c.alignment={vertical:"middle",wrapText:true}; });
+    cab.height = 30;
+    res.filas.forEach(function(x,i){
+      var row = ws.addRow([i+1].concat(res.cols.map(function(c){ return valorCelda(c,x); })));
+      row.eachCell({includeEmpty:true}, function(cell, n){ cell.border={bottom:{style:"thin",color:{argb:"FFD9E0E8"}}}; cell.alignment={vertical:"top",wrapText:true};
+        if(i%2) cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF3F6FA"}};
+        var c = res.cols[n-2]; if(c && c.tipo==="fecha" && cell.value instanceof Date) cell.numFmt="dd/mm/yyyy"; if(c && c.k==="alquiler") cell.numFmt='"RD$" #,##0'; });
+    });
+    ws.getColumn(1).width = 6;
+    res.cols.forEach(function(c,j){
+      var largo = Math.max(c.t.length*0.9, 8); res.filas.slice(0,200).forEach(function(x){ var v=valorCelda(c,x); if(v!=null && !(v instanceof Date)) largo = Math.max(largo, String(v).length); });
+      ws.getColumn(j+2).width = Math.min(40, Math.max(10, largo+2));
+    });
+    ws.autoFilter = { from:{row:4,column:1}, to:{row:4,column:res.cols.length+1} };
+    return wb.xlsx.writeBuffer().then(function(buf){
+      descargar(titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"")+"_"+hoy()+".xlsx", buf, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    });
+  }).catch(function(e){ toast("No se pudo crear el Excel: "+e.message); });
+});
+
 /* ---------- Excel (.xlsx) ---------- */
 function cargarExcelJS(){
   if(window.ExcelJS) return Promise.resolve();
@@ -1184,6 +1564,8 @@ function exportarExcel(){
       ["¿Vive solo(a)?","solo",10],["Personas en la casa","pc",11],["Personas registradas","pr",12],["Agua potable","agua",10],["¿Cada qué tiempo llega el agua?","aguaF",24],["Cisterna","cis",10],["Pozo","pozo",8],["Mayor tiempo sin agua","aguaMax",14],
       ["Electricidad","luz",11],["¿Cada cuánto se va la luz?","luzF",22],["Tarda en regresar (prom.)","luzReg",14],["Mayor tiempo sin luz","luzMax",14],["Baño interior","bano",10],["Internet","int",9],["Recogida de basura","bas",11],
       ["Censador(a)","cen",18],["Fecha","fecha",12],["Notas","notas",30]];
+    var qV = PREGS.filter(function(q){return q.ambito==="vivienda"}).sort(function(a,b){return a.orden-b.orden}), qP = PREGS.filter(function(q){return q.ambito==="persona"}).sort(function(a,b){return a.orden-b.orden});
+    qV.forEach(function(q){ colsV.push([q.texto, "x_"+q.id, Math.min(30, Math.max(12, q.texto.length*0.6))]); });
     tablaDatos(wsV, colsV, V.map(function(r,i){
       var ag = tieneServ(r,"Agua potable"), lz = tieneServ(r,"Electricidad");
       return { n:i+1, sector:r.sector, viv:r.vivienda, dir:r.direccion, tipo:r.tipoVivienda, ten:r.tenencia, alq: +r.alquiler>0 ? +r.alquiler : null,
@@ -1191,8 +1573,9 @@ function exportarExcel(){
         aguaF: ag==="Sí" ? (r.aguaSiempre==="Sí" ? "Siempre hay agua" : r.aguaFrecuencia) : "", cis:r.aguaCisterna, pozo:r.aguaPozo, aguaMax:dur(r.aguaMaxSin,r.aguaMaxSinUnidad),
         luz:lz, luzF:r.luzFrecuencia, luzReg:dur(r.luzRegresa,r.luzRegresaUnidad), luzMax:dur(r.luzMaxSin,r.luzMaxSinUnidad),
         bano:tieneServ(r,"Baño interior"), int:tieneServ(r,"Internet"), bas:tieneServ(r,"Recogida de basura"),
-        cen: r._censador || r.encuestador, fecha: r.fecha ? new Date(r.fecha+"T12:00:00") : null, notas:r.notas };
-    }));
+        cen: r._censador || r.encuestador, fecha: r.fecha ? new Date(r.fecha+"T12:00:00") : null, notas:r.notas,
+        _x: qV.reduce(function(o,q){ o["x_"+q.id] = textoRespuesta((r.extra||{})[q.id]); return o; }, {}) };
+    }).map(function(o){ var x=o._x; delete o._x; return Object.assign(o, x); }));
     wsV.getColumn("alq").numFmt = '"RD$" #,##0'; wsV.getColumn("fecha").numFmt = "dd/mm/yyyy";
 
     /* --- Hoja Personas --- */
@@ -1200,12 +1583,14 @@ function exportarExcel(){
     var colsP = [["No.","n",6,2],["Nombre completo","nombre",26],["Sector / barrio","sector",18],["No. vivienda","viv",10],["Parentesco","par",16],["Sexo","sexo",11],["Edad","edad",7],["Grupo de edad","gedad",10],
       ["Fecha de nacimiento","nac",12],["Cédula","ced",15],["Teléfono","tel",13],["Estado civil","ec",15],["Nacionalidad","nac2",12],["¿Sabe leer y escribir?","alf",11],["¿Estudia?","est",9],
       ["Nivel educativo","niv",22],["Trabajo","trab",20],["Ocupación","ocu",18],["¿Tiene hijos?","th",9],["Cantidad de hijos","hij",9],["Religión","rel",18],["Seguro médico","seg",16],["Discapacidad / salud","sal",22],["Censador(a)","cen",18]];
+    qP.forEach(function(q){ colsP.push([q.texto, "x_"+q.id, Math.min(30, Math.max(12, q.texto.length*0.6))]); });
     var filasP = [], np = 0;
     V.forEach(function(r){ (r.miembros||[]).forEach(function(m){ np++;
       filasP.push({ n:np, nombre:m.nombre, sector:r.sector, viv:r.vivienda, par:m.parentesco, sexo:m.sexo, edad: m.edad===""||m.edad==null ? null : +m.edad, gedad:grupoEdad(m.edad),
         nac: m.nacimiento ? new Date(m.nacimiento+"T12:00:00") : null, ced:m.cedula, tel:m.telefono, ec:m.estadoCivil, nac2:m.nacionalidad, alf:m.alfabetizado, est:m.estudia,
         niv:m.nivel, trab:m.trabaja, ocu:m.ocupacion, th: m.tieneHijos || (+m.hijos>0?"Sí":""), hij: m.hijos===""||m.hijos==null ? null : +m.hijos, rel:m.religion, seg:m.seguro, sal:m.salud,
         cen: r._censador || r.encuestador });
+      qP.forEach(function(q){ filasP[filasP.length-1]["x_"+q.id] = textoRespuesta((m.extra||{})[q.id]); });
     }); });
     tablaDatos(wsP, colsP, filasP);
     wsP.getColumn("nac").numFmt = "dd/mm/yyyy";

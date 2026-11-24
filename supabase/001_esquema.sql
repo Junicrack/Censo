@@ -109,3 +109,22 @@ create trigger config_antes_de_guardar before update on public.config
 revoke all on public.perfiles, public.config, public.viviendas from anon;
 revoke execute on function public.mi_rol(), public.censo_abierto() from anon, public;
 grant execute on function public.mi_rol(), public.censo_abierto() to authenticated;
+
+-- ===== Preguntas creadas por el administrador (migración 2) =====
+create table public.preguntas (
+  id text primary key default ('q' || substr(md5(random()::text || clock_timestamp()::text), 1, 8)),
+  ambito text not null check (ambito in ('vivienda','persona')),
+  texto text not null check (length(trim(texto)) > 0),
+  tipo text not null check (tipo in ('opcion','casillas','sino','texto','numero','fecha')),
+  opciones text[] not null default '{}',
+  obligatoria boolean not null default false,
+  activa boolean not null default true,
+  orden int not null default 0,
+  creado timestamptz not null default now()
+);
+alter table public.preguntas enable row level security;
+create policy preguntas_ver on public.preguntas for select to authenticated
+  using (public.mi_rol() is not null);
+create policy preguntas_admin on public.preguntas for all to authenticated
+  using (public.mi_rol() = 'admin') with check (public.mi_rol() = 'admin');
+revoke all on public.preguntas from anon;
