@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f6e56">
+<title>Censo Comunitario</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f3f6fa; --card:#ffffff; --ink:#15202b; --muted:#56616d; --line:#d9e0e8;
+  --brand:#0f7a5c; --brand-dark:#0a5a44; --brand-ink:#ffffff; --brand-soft:#e2f2ec;
+  --opt:#e8edf3; --opt-ink:#1f2b37; --danger:#c62828; --warn:#8a5a00;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--brand);color:var(--brand-ink);padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top))}
+header h1{margin:0;font-size:20px}
+header small{opacity:.9}
+nav{display:flex;gap:6px;padding:8px 10px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4;overflow-x:auto;box-shadow:0 2px 6px rgba(20,40,60,.06)}
+nav button{flex:1 1 auto;min-width:0;border:0;border-radius:999px;background:var(--opt);color:var(--opt-ink);padding:10px 12px;font-size:15px;font-weight:600;white-space:nowrap;cursor:pointer}
+nav button.on{background:var(--brand);color:var(--brand-ink)}
+main{max-width:760px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,40,60,.05)}
+.card h2{font-size:17px;margin:0 0 12px;color:var(--brand-dark)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid .full{grid-column:1/-1}
+@media (max-width:520px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:5px;font-weight:500}
+label .req{color:var(--danger)}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #c9d2dc;border-radius:10px;background:#ffffff;color:var(--ink);font-size:16px}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);border-color:transparent}
+/* Opciones como botones de color sólido */
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;min-width:64px;border:0;border-radius:10px;padding:10px 12px;font-size:15px;font-weight:600;background:var(--opt);color:var(--opt-ink);cursor:pointer}
+.seg button.on{background:var(--brand);color:var(--brand-ink)}
+.seg + select{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{display:inline-flex;align-items:center;gap:6px;margin:0;padding:9px 14px;border:0;border-radius:999px;color:var(--opt-ink);background:var(--opt);cursor:pointer;font-weight:600}
+.chips label:has(input:checked){background:var(--brand);color:var(--brand-ink)}
+.chips input{width:auto;margin:0;accent-color:#ffffff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;padding:12px 16px;font-size:16px;font-weight:600;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
+.btn.sec{background:var(--s1);color:#ffffff}
+.btn.danger{background:var(--danger);color:#ffffff}
+.btn.sm{padding:7px 12px;font-size:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hide{display:none!important}
+.muted{color:var(--muted);font-size:14px}
+.list .item{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.list .item:last-child{border-bottom:0}
+.item b{display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--brand);border-radius:12px;padding:12px}
+.stat .n{font-size:26px;font-weight:700;color:var(--ink)}
+.bar{display:grid;grid-template-columns:130px 1fr 44px;gap:8px;align-items:center;margin:6px 0;font-size:14px}
+.bar .t{height:14px;background:var(--opt);border-radius:4px;overflow:hidden}
+.bar .f{height:100%;background:var(--s1);border-radius:0 4px 4px 0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+.update{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--s4);color:#15202b;padding:10px 16px;font-weight:600}
+.update .btn{background:#15202b;color:#fff;text-decoration:none}
+.sub{margin-top:14px;padding:12px;border-left:5px solid var(--brand);background:var(--brand-soft);border-radius:10px}
+.sub h3{margin:0 0 10px;font-size:15px;color:var(--brand-dark)}
+.sub .seg button:not(.on){background:#ffffff}
+.dur{display:grid;grid-template-columns:1fr 130px;gap:8px}
+.member{border:1px solid var(--line);border-left:5px solid var(--s1);border-radius:12px;padding:12px;margin-bottom:12px;background:#fbfcfe}
+.member-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.member-h b{color:var(--s1)}
+/* Creador de gráficas */
+.chart-ctl{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.chart-ctl{grid-template-columns:1fr}}
+.chart-box{position:relative;margin-top:14px}
+.chart-box svg{display:block;width:100%;height:auto}
+
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:13px;padding:6px 9px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);opacity:0;transition:opacity .12s}
+.tip.show{opacity:1}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:14px;color:var(--ink)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+table.tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+.tbl th,.tbl td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl thead th{color:var(--muted);font-weight:600}
+details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-top:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Censo Comunitario</h1>
+  <small id="hdrInfo">Funciona sin internet · los datos se guardan en este equipo</small>
+</header>
+<nav>
+  <button data-tab="form" class="on">Registrar</button>
+  <button data-tab="list">Registros</button>
+  <button data-tab="stats">Resumen</button>
+  <button data-tab="data">Datos</button>
+</nav>
+
+<div id="avisoVersion" class="update hide">
+  <span id="avisoTexto">Hay una versión nueva de la app.</span>
+  <a class="btn sm" id="avisoBtn" href="#">Descargar</a>
+</div>
+<main>
+<!-- ============ FORMULARIO ============ -->
+<section id="tab-form">
+  <form id="f" autocomplete="off">
+    <input type="hidden" name="id">
+    <div class="card">
+      <h2>Vivienda</h2>
+      <div class="grid">
+        <div><label>Sector / Barrio <span class="req">*</span></label><input name="sector" required list="sectores"></div>
+        <datalist id="sectores"></datalist>
+        <div><label>No. de vivienda</label><input name="vivienda" inputmode="numeric"></div>
+        <div class="full"><label>Dirección o referencia</label><input name="direccion"></div>
+        <div><label>Tipo de vivienda</label>
+          <select name="tipoVivienda"><option></option><option>Casa</option><option>Apartamento</option><option>Cuartería / pieza</option><option>Otra</option></select></div>
+        <div><label>Tenencia</label>
+          <select name="tenencia"><option></option><option>Propia</option><option>Alquilada</option><option>Prestada</option><option>Otra</option></select></div>
+        <div class="full" data-show="alquilada"><label>Costo del alquiler mensual en RD$ (opcional)</label><input type="number" min="0" inputmode="numeric" name="alquiler" placeholder="Ej. 8000"></div>
+        <div><label>¿Vive solo(a)?</label>
+          <select name="viveSolo"><option></option><option>Sí</option><option>No</option></select></div>
+        <div data-show="noSolo"><label>¿Cuántas personas viven en la casa?</label><input type="number" min="2" max="50" inputmode="numeric" name="personasHogar"></div>
+        <div class="full"><label>Servicios en la vivienda</label>
+          <div class="chips">
+            <label><input type="checkbox" name="servicios" value="Agua potable">Agua potable</label>
+            <label><input type="checkbox" name="servicios" value="Electricidad">Electricidad</label>
+            <label><input type="checkbox" name="servicios" value="Baño interior">Baño interior</label>
+            <label><input type="checkbox" name="servicios" value="Internet">Internet</label>
+            <label><input type="checkbox" name="servicios" value="Recogida de basura">Recogida de basura</label>
+          </div></div>
+      </div>
+      <div class="sub" data-show="agua">
+        <h3>Agua potable</h3>
+        <div class="grid">
+          <div class="full"><div class="chips"><label><input type="checkbox" name="aguaSiempre" value="Sí">Siempre hay agua</label></div></div>
+          <div class="full" data-show="aguaNoSiempre"><label>¿Cada qué tiempo llega el agua a la casa?</label>
+            <select name="aguaFrecuencia"><option></option><option>Todos los días, algunas horas</option><option>Varios días a la semana</option><option>Una vez por semana</option><option>Cada 15 días</option><option>Una vez al mes o menos</option></select></div>
+          <div><label>¿Tiene cisterna?</label><select name="aguaCisterna"><option></option><option>Sí</option><option>No</option></select></div>
+          <div><label>¿Tiene pozo?</label><select name="aguaPozo"><option></option><option>Sí</option><option>No</option></select></div>
+          <div class="full"><label>¿Cuál ha sido el mayor tiempo que ha durado sin agua?</label>
+            <div class="dur"><input type="number" min="0" inputmode="numeric" name="aguaMaxSin"><select name="aguaMaxSinUnidad"><option>Días</option><option>Horas</option><option>Semanas</option><option>Meses</option></select></div></div>
+        </div>
+      </div>
+      <div class="sub" data-show="luz">
+        <h3>Electricidad</h3>
+        <div class="grid">
+          <div class="full"><label>¿Cada cuánto tiempo se va la luz?</label>
+            <select name="luzFrecuencia"><option></option><option>No se va</option><option>Varias veces al día</option><option>Una vez al día</option><option>Varias veces por semana</option><option>Una vez por semana</option><option>Rara vez (al mes o menos)</option></select></div>
+          <div class="full" data-show="luzSeVa"><label>Tiempo promedio en que tarda en regresar</label>
+            <div class="dur"><input type="number" min="0" inputmode="numeric" name="luzRegresa"><select name="luzRegresaUnidad"><option>Horas</option><option>Minutos</option><option>Días</option></select></div></div>
+          <div class="full" data-show="luzSeVa"><label>¿Cuál es el mayor tiempo que ha durado sin luz?</label>
+            <div class="dur"><input type="number" min="0" inputmode="numeric" name="luzMaxSin"><select name="luzMaxSinUnidad"><option>Horas</option><option>Días</option><option>Semanas</option></select></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="member-h"><h2 style="margin:0">Personas que viven aquí</h2><span class="muted" id="nMiembros"></span></div>
+      <div id="miembros"></div>
+      <button type="button" class="btn sec" id="addMiembro">+ Agregar persona</button>
+    </div>
+
+    <div class="card">
+      <h2>Observaciones</h2>
+      <div class="grid">
+        <div><label>Encuestador(a)</label><input name="encuestador" id="encuestador"></div>
+        <div><label>Fecha</label><input type="date" name="fecha"></div>
+        <div class="full"><label>Notas</label><textarea name="notas"></textarea></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn" type="submit" id="btnGuardar">Guardar registro</button>
+      <button class="btn sec" type="button" id="btnLimpiar">Limpiar</button>
+    </div>
+  </form>
+</section>
+
+<!-- ============ LISTA ============ -->
+<section id="tab-list" class="hide">
+  <div class="card">
+    <input id="buscar" placeholder="Buscar por nombre, sector o vivienda…">
+    <p class="muted" id="cuenta" style="margin:8px 0 0"></p>
+  </div>
+  <div class="card list" id="lista"></div>
+</section>
+
+<!-- ============ RESUMEN ============ -->
+<section id="tab-stats" class="hide">
+  <div class="card">
+    <label>Filtrar por sector</label>
+    <select id="filtroSector"></select>
+  </div>
+  <div class="stats" id="kpis" style="margin-bottom:14px"></div>
+  <div class="card" id="creador">
+    <h2>Crear gráfica</h2>
+    <div class="chart-ctl">
+      <div><label>¿Qué quieres graficar?</label><select id="gVar"></select></div>
+      <div><label>Tipo de gráfica</label>
+        <select id="gTipo"><option value="barras">Barras verticales</option><option value="hbarras">Barras horizontales</option><option value="pastel">Pastel</option><option value="dona">Dona</option></select></div>
+      <div><label>Separar por (opcional)</label><select id="gCruce"></select></div>
+      <div><label>Mostrar</label>
+        <select id="gModo"><option value="n">Cantidades</option><option value="pct">Porcentajes</option></select></div>
+      <div class="full" style="grid-column:1/-1"><div class="chips"><label><input type="checkbox" id="gSinDato">Incluir "Sin dato"</label></div></div>
+    </div>
+    <p class="muted" id="gNota" style="margin:10px 0 0"></p>
+    <div class="chart-box" id="gBox"><div class="tip" id="gTip"></div></div>
+    <div class="legend" id="gLeyenda"></div>
+    <div class="row" style="margin-top:12px"><button class="btn sm" id="gPng" type="button">Descargar imagen</button></div>
+    <details><summary>Ver tabla de datos</summary><div id="gTabla" style="overflow-x:auto"></div></details>
+  </div>
+  <div id="graficos"></div>
+</section>
+
+<!-- ============ DATOS ============ -->
+<section id="tab-data" class="hide">
+  <div class="card">
+    <h2>Exportar</h2>
+    <p class="muted">Descarga los datos para abrirlos en Excel o para unirlos con los de otros encuestadores.</p>
+    <div class="row">
+      <button class="btn" id="expCsv">Excel (CSV, una fila por persona)</button>
+      <button class="btn sec" id="expJson">Respaldo completo (JSON)</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Importar / unir</h2>
+    <p class="muted">Carga un respaldo JSON de otro equipo. Los registros repetidos se actualizan, no se duplican.</p>
+    <input type="file" id="impFile" accept=".json,application/json">
+  </div>
+  <div class="card">
+    <h2>Borrar todo</h2>
+    <p class="muted">Elimina todos los registros de este equipo. Exporta un respaldo antes.</p>
+    <button class="btn danger" id="borrarTodo">Borrar todos los registros</button>
+  </div>
+  <p class="muted" id="versionApp" style="text-align:center"></p>
+</section>
+</main>
+
+<template id="tplMiembro">
+  <div class="member">
+    <div class="member-h"><b class="mtitle">Persona</b><button type="button" class="btn danger sm mdel">Quitar</button></div>
+    <div class="grid">
+      <div class="full"><label>Nombre completo <span class="req">*</span></label><input data-k="nombre" required></div>
+      <div><label>Parentesco con el jefe(a) de hogar</label>
+        <select data-k="parentesco"><option></option><option>Jefe(a) de hogar</option><option>Esposo(a) / pareja</option><option>Hijo(a)</option><option>Padre / madre</option><option>Nieto(a)</option><option>Hermano(a)</option><option>Otro familiar</option><option>No familiar</option></select></div>
+      <div><label>Sexo</label>
+        <select data-k="sexo"><option></option><option>Femenino</option><option>Masculino</option></select></div>
+      <div><label>Fecha de nacimiento</label><input type="date" data-k="nacimiento"></div>
+      <div><label>Edad (años) <span class="req">*</span></label><input type="number" min="0" max="120" inputmode="numeric" data-k="edad" required></div>
+      <div><label>Cédula (opcional)</label><input data-k="cedula" inputmode="numeric" placeholder="000-0000000-0"></div>
+      <div><label>Teléfono</label><input data-k="telefono" type="tel"></div>
+      <div><label>Estado civil</label>
+        <select data-k="estadoCivil"><option></option><option>Soltero(a)</option><option>Casado(a)</option><option>Unión libre</option><option>Separado(a) / divorciado(a)</option><option>Viudo(a)</option></select></div>
+      <div><label>Nacionalidad</label>
+        <select data-k="nacionalidad"><option></option><option>Dominicana</option><option>Haitiana</option><option>Venezolana</option><option>Otra</option></select></div>
+
+      <div><label>¿Sabe leer y escribir?</label>
+        <select data-k="alfabetizado"><option></option><option>Sí</option><option>No</option></select></div>
+      <div><label>¿Estudia actualmente?</label>
+        <select data-k="estudia"><option></option><option>Sí</option><option>No</option></select></div>
+      <div><label>Nivel educativo alcanzado</label>
+        <select data-k="nivel"><option></option><option>Ninguno</option><option>Inicial</option><option>Primaria incompleta</option><option>Primaria completa</option><option>Secundaria incompleta</option><option>Secundaria completa</option><option>Técnico</option><option>Universitario incompleto</option><option>Universitario completo</option><option>Postgrado / maestría</option></select></div>
+      <div><label>Trabaja</label>
+        <select data-k="trabaja"><option></option><option>Sí, empleado(a)</option><option>Sí, por cuenta propia</option><option>No, busca trabajo</option><option>No trabaja</option><option>Jubilado(a) / pensionado(a)</option><option>Estudiante</option><option>Oficios del hogar</option></select></div>
+      <div class="full"><label>Ocupación u oficio</label><input data-k="ocupacion"></div>
+
+      <div><label>¿Tiene hijos?</label>
+        <select data-k="tieneHijos"><option></option><option>Sí</option><option>No</option></select></div>
+      <div><label>Cantidad de hijos</label><input type="number" min="0" max="30" inputmode="numeric" data-k="hijos"></div>
+      <div><label>Religión</label>
+        <select data-k="religion"><option></option><option>Católica</option><option>Evangélica / cristiana</option><option>Adventista</option><option>Testigo de Jehová</option><option>Otra</option><option>Ninguna</option><option>Prefiere no decir</option></select></div>
+      <div><label>¿Tiene seguro médico?</label>
+        <select data-k="seguro"><option></option><option>Sí, SENASA</option><option>Sí, privado / ARS</option><option>No</option></select></div>
+      <div class="full"><label>¿Tiene alguna discapacidad o condición de salud?</label><input data-k="salud" placeholder="Dejar vacío si no"></div>
+    </div>
+  </div>
+</template>
+
+<div class="toast" id="toast"></div>
+<script src="version.js"></script>
+
+<script>
+(function(){
+"use strict";
+var KEY = "censo.registros.v1";
+var $ = function(s, r){ return (r||document).querySelector(s); };
+var $$ = function(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+
+/* ---------- almacenamiento ---------- */
+function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } }
+function save(list){
+  try { localStorage.setItem(KEY, JSON.stringify(list)); return true; }
+  catch(e){ toast("No se pudo guardar: " + e.message); return false; }
+}
+var db = load();
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function toast(m){ var t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(function(){t.classList.remove("show")},2200); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]}); }
+function hoy(){ var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+
+/* ---------- pestañas ---------- */
+$$("nav button").forEach(function(b){
+  b.addEventListener("click", function(){ show(b.dataset.tab); });
+});
+function show(tab){
+  $$("nav button").forEach(function(b){ b.classList.toggle("on", b.dataset.tab===tab); });
+  ["form","list","stats","data"].forEach(function(t){ $("#tab-"+t).classList.toggle("hide", t!==tab); });
+  if(tab==="list") renderList();
+  if(tab==="stats") renderStats();
+  window.scrollTo(0,0);
+}
+
+/* ---------- miembros del hogar ---------- */
+function addMiembro(data){
+  var node = $("#tplMiembro").content.firstElementChild.cloneNode(true);
+  if(data){ $$("[data-k]", node).forEach(function(el){ if(data[el.dataset.k]!=null) el.value = data[el.dataset.k]; }); }
+  $(".mdel", node).addEventListener("click", function(){
+    if($$("#miembros .member").length<=1){ toast("Debe haber al menos una persona"); return; }
+    node.remove(); numerar();
+  });
+  var nac = $('[data-k="nacimiento"]', node), edad = $('[data-k="edad"]', node);
+  nac.addEventListener("change", function(){
+    if(!nac.value) return;
+    var b=new Date(nac.value+"T00:00:00"), n=new Date(), a=n.getFullYear()-b.getFullYear();
+    if(n.getMonth()<b.getMonth() || (n.getMonth()===b.getMonth() && n.getDate()<b.getDate())) a--;
+    if(a>=0 && a<=120) edad.value=a;
+  });
+  var th = $('[data-k="tieneHijos"]', node), hj = $('[data-k="hijos"]', node);
+  th.addEventListener("change", function(){ if(th.value==="No") hj.value=0; });
+  hj.addEventListener("input", function(){ if(+hj.value>0){ th.value="Sí"; syncSeg(node); } });
+  segmentar(node);
+  $("#miembros").appendChild(node);
+  syncSeg(node);
+  numerar();
+  return node;
+}
+function numerar(){
+  var ms=$$("#miembros .member");
+  ms.forEach(function(m,i){ $(".mtitle",m).textContent = "Persona " + (i+1); });
+  $("#nMiembros").textContent = ms.length + (ms.length===1?" persona":" personas");
+}
+$("#addMiembro").addEventListener("click", function(){
+  var n=addMiembro(); $('[data-k="nombre"]', n).focus();
+});
+
+/* ---------- opciones como botones ---------- */
+function segmentar(root){
+  $$("select", root).forEach(function(sel){
+    if(sel.dataset.seg || sel.closest(".dur") || sel.closest("#tab-stats")) return;
+    var opts = Array.prototype.filter.call(sel.options, function(o){ return o.value!==""; });
+    if(!opts.length || opts.length>5) return;
+    sel.dataset.seg = "1";
+    var box = document.createElement("div"); box.className="seg";
+    opts.forEach(function(o){
+      var b=document.createElement("button"); b.type="button"; b.textContent=o.value; b.dataset.v=o.value;
+      b.addEventListener("click", function(){
+        sel.value = (sel.value===o.value) ? "" : o.value;
+        sel.dispatchEvent(new Event("change",{bubbles:true}));
+        syncSeg(box.parentNode);
+      });
+      box.appendChild(b);
+    });
+    sel.parentNode.insertBefore(box, sel);
+  });
+}
+function syncSeg(root){
+  $$(".seg", root).forEach(function(box){
+    var sel = box.nextElementSibling;
+    $$("button", box).forEach(function(b){ b.classList.toggle("on", b.dataset.v===sel.value); });
+  });
+}
+
+/* ---------- formulario ---------- */
+var f = $("#f");
+// Campos extra de la vivienda (agua, luz, hogar, alquiler)
+var VEXTRA = ["alquiler","viveSolo","personasHogar","aguaSiempre","aguaFrecuencia","aguaCisterna","aguaPozo","aguaMaxSin","aguaMaxSinUnidad","luzFrecuencia","luzRegresa","luzRegresaUnidad","luzMaxSin","luzMaxSinUnidad"];
+function servicio(v){ var c=$('input[name="servicios"][value="'+v+'"]'); return c && c.checked; }
+var CONDS = {
+  alquilada: function(){ return f.tenencia.value==="Alquilada"; },
+  noSolo: function(){ return f.viveSolo.value==="No"; },
+  agua: function(){ return servicio("Agua potable"); },
+  aguaNoSiempre: function(){ return !f.aguaSiempre.checked; },
+  luz: function(){ return servicio("Electricidad"); },
+  luzSeVa: function(){ return f.luzFrecuencia.value!=="No se va"; }
+};
+function condiciones(){
+  syncSeg(f);
+  $$("[data-show]", f).forEach(function(el){ el.classList.toggle("hide", !CONDS[el.dataset.show]()); });
+}
+function visible(el){ while(el && el!==f){ if(el.classList && el.classList.contains("hide")) return false; el=el.parentNode; } return true; }
+f.addEventListener("change", condiciones);
+f.viveSolo.addEventListener("change", function(){
+  if(f.viveSolo.value==="No" && !f.personasHogar.value){ var n=$$("#miembros .member").length; if(n>1) f.personasHogar.value=n; }
+});
+function resetForm(){
+  f.reset(); f.id.value="";
+  $("#miembros").innerHTML=""; addMiembro();
+  f.fecha.value = hoy();
+  try { f.encuestador.value = localStorage.getItem("censo.encuestador") || ""; } catch(e){}
+  $("#btnGuardar").textContent="Guardar registro";
+  condiciones();
+}
+function fillForm(r){
+  resetForm();
+  ["id","sector","vivienda","direccion","tipoVivienda","tenencia","encuestador","fecha","notas"].forEach(function(k){ if(f[k]) f[k].value = r[k]||""; });
+  $$('input[name="servicios"]').forEach(function(c){ c.checked = (r.servicios||[]).indexOf(c.value)>=0; });
+  VEXTRA.forEach(function(k){ var el=f[k]; if(!el) return; if(el.type==="checkbox") el.checked = r[k]==="Sí"; else if(r[k]!=null && r[k]!=="") el.value = r[k]; });
+  condiciones();
+  $("#miembros").innerHTML="";
+  (r.miembros && r.miembros.length ? r.miembros : [{}]).forEach(addMiembro);
+  $("#btnGuardar").textContent="Guardar cambios";
+}
+f.addEventListener("submit", function(e){
+  e.preventDefault();
+  var r = {
+    id: f.id.value || uid(),
+    sector: f.sector.value.trim(), vivienda: f.vivienda.value.trim(), direccion: f.direccion.value.trim(),
+    tipoVivienda: f.tipoVivienda.value, tenencia: f.tenencia.value,
+    servicios: $$('input[name="servicios"]:checked').map(function(c){return c.value}),
+    encuestador: f.encuestador.value.trim(), fecha: f.fecha.value, notas: f.notas.value.trim(),
+    miembros: $$("#miembros .member").map(function(m){
+      var o={}; $$("[data-k]", m).forEach(function(el){ o[el.dataset.k] = el.value.trim(); });
+      if(o.edad!=="") o.edad = +o.edad; if(o.hijos!=="") o.hijos = +o.hijos;
+      return o;
+    }),
+    actualizado: new Date().toISOString()
+  };
+  // Solo se guardan las preguntas que estaban a la vista
+  VEXTRA.forEach(function(k){
+    var el=f[k];
+    if(!visible(el)) { r[k]=""; return; }
+    r[k] = el.type==="checkbox" ? (el.checked?"Sí":"No") : el.value.trim();
+  });
+  ["aguaMaxSin","luzRegresa","luzMaxSin"].forEach(function(k){ if(r[k]==="") r[k+"Unidad"]=""; });
+  var i = db.findIndex(function(x){return x.id===r.id});
+  if(i>=0){ r.creado = db[i].creado; db[i]=r; } else { r.creado = r.actualizado; db.push(r); }
+  if(save(db)){
+    try { localStorage.setItem("censo.encuestador", r.encuestador); } catch(e){}
+    toast(i>=0 ? "Cambios guardados" : "Registro guardado ("+db.length+" en total)");
+    resetForm(); updateSectores(); updateHeader(); window.scrollTo(0,0);
+  }
+});
+$("#btnLimpiar").addEventListener("click", function(){ if(confirm("¿Limpiar el formulario?")) resetForm(); });
+
+/* ---------- lista ---------- */
+function renderList(){
+  var q = $("#buscar").value.toLowerCase().trim();
+  var items = db.slice().sort(function(a,b){ return (b.actualizado||"").localeCompare(a.actualizado||""); }).filter(function(r){
+    if(!q) return true;
+    var txt = [r.sector,r.vivienda,r.direccion].concat((r.miembros||[]).map(function(m){return m.nombre+" "+(m.cedula||"")})).join(" ").toLowerCase();
+    return txt.indexOf(q)>=0;
+  });
+  var personas = db.reduce(function(s,r){return s+(r.miembros||[]).length},0);
+  $("#cuenta").textContent = db.length+" viviendas · "+personas+" personas" + (q ? " · "+items.length+" coinciden" : "");
+  $("#lista").innerHTML = items.length ? items.map(function(r){
+    var jefe = (r.miembros||[])[0]||{};
+    return '<div class="item"><div><b>'+esc(jefe.nombre||"(sin nombre)")+'</b>'+
+      '<span class="muted">'+esc(r.sector)+(r.vivienda?' · Viv. '+esc(r.vivienda):'')+' · '+(r.miembros||[]).length+' persona(s) · '+esc(r.fecha||'')+'</span></div>'+
+      '<div class="row" style="flex-wrap:nowrap"><button class="btn sec sm" data-ed="'+r.id+'">Editar</button><button class="btn danger sm" data-del="'+r.id+'">Borrar</button></div></div>';
+  }).join("") : '<p class="muted">No hay registros todavía.</p>';
+}
+$("#buscar").addEventListener("input", renderList);
+$("#lista").addEventListener("click", function(e){
+  var ed=e.target.dataset.ed, del=e.target.dataset.del;
+  if(ed){ fillForm(db.find(function(x){return x.id===ed})); show("form"); }
+  if(del && confirm("¿Borrar este registro? No se puede deshacer.")){
+    db = db.filter(function(x){return x.id!==del}); save(db); renderList(); updateHeader(); toast("Registro borrado");
+  }
+});
+
+/* ---------- resumen ---------- */
+function personas(sector){
+  var out=[]; db.forEach(function(r){ if(sector && r.sector!==sector) return; (r.miembros||[]).forEach(function(m){ out.push(m); }); });
+  return out;
+}
+function contar(arr, fn){
+  var c={}; arr.forEach(function(x){ var k=fn(x); if(k===""||k==null) k="Sin dato"; c[k]=(c[k]||0)+1; }); return c;
+}
+function grupoEdad(e){
+  if(e===""||e==null||isNaN(e)) return "";
+  e=+e; if(e<=5) return "0–5"; if(e<=12) return "6–12"; if(e<=17) return "13–17"; if(e<=29) return "18–29"; if(e<=44) return "30–44"; if(e<=64) return "45–64"; return "65+";
+}
+function barras(titulo, c, orden){
+  var keys = orden ? orden.filter(function(k){return c[k]}) .concat(Object.keys(c).filter(function(k){return orden.indexOf(k)<0})) : Object.keys(c).sort(function(a,b){return c[b]-c[a]});
+  var tot = keys.reduce(function(s,k){return s+c[k]},0)||1;
+  return '<div class="card"><h2>'+esc(titulo)+'</h2>'+ (keys.length ? keys.map(function(k){
+    var p=Math.round(c[k]*100/tot);
+    return '<div class="bar"><span>'+esc(k)+'</span><div class="t"><div class="f" style="width:'+p+'%"></div></div><span>'+c[k]+'</span></div>';
+  }).join("") : '<p class="muted">Sin datos</p>') + '</div>';
+}
+function renderStats(){
+  var sel=$("#filtroSector"), cur=sel.value;
+  var sectores = Array.from(new Set(db.map(function(r){return r.sector}).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="">Todos los sectores</option>' + sectores.map(function(s){return '<option'+(s===cur?' selected':'')+'>'+esc(s)+'</option>'}).join("");
+  var P = personas(sel.value), V = db.filter(function(r){return !sel.value || r.sector===sel.value}), viv = V.length;
+  var edades = P.map(function(m){return m.edad}).filter(function(e){return e!==""&&e!=null&&!isNaN(e)});
+  var prom = edades.length ? (edades.reduce(function(a,b){return a+ +b},0)/edades.length).toFixed(1) : "–";
+  var menores = edades.filter(function(e){return e<18}).length;
+  var estudian = P.filter(function(m){return m.estudia==="Sí"}).length;
+  var conHijos = P.filter(function(m){return m.tieneHijos==="Sí" || +m.hijos>0}).length;
+  var noLee = P.filter(function(m){return m.alfabetizado==="No"}).length;
+  $("#kpis").innerHTML = [
+    ["Viviendas",viv],["Personas",P.length],["Edad promedio",prom],
+    ["Menores de 18",menores],["Estudian",estudian],["No saben leer",noLee]
+  ].map(function(k){return '<div class="stat"><div class="n">'+k[1]+'</div><div class="muted">'+k[0]+'</div></div>'}).join("");
+  $("#graficos").innerHTML =
+    barras("Edades", contar(P,function(m){return grupoEdad(m.edad)}), ["0–5","6–12","13–17","18–29","30–44","45–64","65+","Sin dato"]) +
+    barras("Sexo", contar(P,function(m){return m.sexo})) +
+    barras("¿Estudia actualmente?", contar(P,function(m){return m.estudia})) +
+    barras("Nivel educativo", contar(P,function(m){return m.nivel}), ["Ninguno","Inicial","Primaria incompleta","Primaria completa","Secundaria incompleta","Secundaria completa","Técnico","Universitario incompleto","Universitario completo","Postgrado / maestría"]) +
+    barras("Personas con hijos", {"Con hijos":conHijos,"Sin hijos / sin dato":P.length-conHijos}) +
+    barras("Religión", contar(P,function(m){return m.religion})) +
+    barras("Trabajo", contar(P,function(m){return m.trabaja})) +
+    barras("Seguro médico", contar(P,function(m){return m.seguro})) +
+    alquilerCard(V) +
+    barras("Viviendas: ¿cada qué tiempo llega el agua?", contar(V.filter(function(r){return (r.servicios||[]).indexOf("Agua potable")>=0}),function(r){return r.aguaSiempre==="Sí"?"Siempre hay agua":r.aguaFrecuencia})) +
+    barras("Viviendas con cisterna", contar(V.filter(function(r){return r.aguaCisterna}),function(r){return r.aguaCisterna})) +
+    barras("Viviendas con pozo", contar(V.filter(function(r){return r.aguaPozo}),function(r){return r.aguaPozo})) +
+    barras("Viviendas: ¿cada cuánto se va la luz?", contar(V.filter(function(r){return (r.servicios||[]).indexOf("Electricidad")>=0}),function(r){return r.luzFrecuencia}), ["No se va","Varias veces al día","Una vez al día","Varias veces por semana","Una vez por semana","Rara vez (al mes o menos)"]) +
+    barras("Viviendas: ¿viven solos?", contar(V,function(r){return r.viveSolo==="Sí"?"Vive solo(a)":r.viveSolo==="No"?"Viven varias personas":""}));
+}
+/* ---------- creador de gráficas ---------- */
+var COLORES = ["#2a78d6","#eb6834","#1baf7a","#eda100","#e87ba4","#008300","#6250d6","#e34948"];
+var ORD_EDAD = ["0–5","6–12","13–17","18–29","30–44","45–64","65+"];
+var ORD_NIVEL = ["Ninguno","Inicial","Primaria incompleta","Primaria completa","Secundaria incompleta","Secundaria completa","Técnico","Universitario incompleto","Universitario completo","Postgrado / maestría"];
+function tieneServ(r,v){ return (r.servicios||[]).indexOf(v)>=0 ? "Sí" : "No"; }
+function rango(x, cortes, etq){ if(x===""||x==null||isNaN(x)||+x<=0&&etq[0].indexOf("0")<0) return ""; x=+x; for(var i=0;i<cortes.length;i++){ if(x<cortes[i]) return etq[i]; } return etq[etq.length-1]; }
+var VARS = [
+  {g:"Personas", k:"edad", t:"Edad (grupos)", p:1, f:function(m){return grupoEdad(m.edad)}, o:ORD_EDAD},
+  {g:"Personas", k:"sexo", t:"Sexo", p:1, f:function(m){return m.sexo}},
+  {g:"Personas", k:"parentesco", t:"Parentesco", p:1, f:function(m){return m.parentesco}},
+  {g:"Personas", k:"estadoCivil", t:"Estado civil", p:1, f:function(m){return m.estadoCivil}},
+  {g:"Personas", k:"nacionalidad", t:"Nacionalidad", p:1, f:function(m){return m.nacionalidad}},
+  {g:"Personas", k:"alfabetizado", t:"¿Sabe leer y escribir?", p:1, f:function(m){return m.alfabetizado}, o:["Sí","No"]},
+  {g:"Personas", k:"estudia", t:"¿Estudia actualmente?", p:1, f:function(m){return m.estudia}, o:["Sí","No"]},
+  {g:"Personas", k:"nivel", t:"Nivel educativo", p:1, f:function(m){return m.nivel}, o:ORD_NIVEL},
+  {g:"Personas", k:"trabaja", t:"Trabajo", p:1, f:function(m){return m.trabaja}},
+  {g:"Personas", k:"tieneHijos", t:"¿Tiene hijos?", p:1, f:function(m){return m.tieneHijos || (+m.hijos>0?"Sí":"")}, o:["Sí","No"]},
+  {g:"Personas", k:"hijos", t:"Cantidad de hijos", p:1, f:function(m){ if(m.hijos===""||m.hijos==null) return m.tieneHijos==="No"?"0":""; var h=+m.hijos; return h>=4?"4 o más":String(h); }, o:["0","1","2","3","4 o más"]},
+  {g:"Personas", k:"religion", t:"Religión", p:1, f:function(m){return m.religion}},
+  {g:"Personas", k:"seguro", t:"Seguro médico", p:1, f:function(m){return m.seguro}},
+  {g:"Viviendas", k:"sector", t:"Sector / barrio", p:0, f:function(m,r){return r.sector}},
+  {g:"Viviendas", k:"tipoVivienda", t:"Tipo de vivienda", p:0, f:function(m,r){return r.tipoVivienda}},
+  {g:"Viviendas", k:"tenencia", t:"Tenencia (propia, alquilada…)", p:0, f:function(m,r){return r.tenencia}},
+  {g:"Viviendas", k:"alquiler", t:"Costo del alquiler", p:0, f:function(m,r){ if(!(+r.alquiler>0)) return ""; return rango(+r.alquiler,[5000,10000,15000,25000],["Menos de RD$5,000","RD$5,000–9,999","RD$10,000–14,999","RD$15,000–24,999","RD$25,000 o más"]); }, o:["Menos de RD$5,000","RD$5,000–9,999","RD$10,000–14,999","RD$15,000–24,999","RD$25,000 o más"]},
+  {g:"Viviendas", k:"viveSolo", t:"¿Vive solo(a)?", p:0, f:function(m,r){return r.viveSolo}, o:["Sí","No"]},
+  {g:"Viviendas", k:"svAgua", t:"Tiene agua potable", p:0, f:function(m,r){return tieneServ(r,"Agua potable")}, o:["Sí","No"]},
+  {g:"Viviendas", k:"svLuz", t:"Tiene electricidad", p:0, f:function(m,r){return tieneServ(r,"Electricidad")}, o:["Sí","No"]},
+  {g:"Viviendas", k:"svBano", t:"Tiene baño interior", p:0, f:function(m,r){return tieneServ(r,"Baño interior")}, o:["Sí","No"]},
+  {g:"Viviendas", k:"svInternet", t:"Tiene internet", p:0, f:function(m,r){return tieneServ(r,"Internet")}, o:["Sí","No"]},
+  {g:"Viviendas", k:"svBasura", t:"Tiene recogida de basura", p:0, f:function(m,r){return tieneServ(r,"Recogida de basura")}, o:["Sí","No"]},
+  {g:"Viviendas", k:"aguaFrec", t:"¿Cada qué tiempo llega el agua?", p:0, f:function(m,r){ return r.aguaSiempre==="Sí" ? "Siempre hay agua" : r.aguaFrecuencia; }, o:["Siempre hay agua","Todos los días, algunas horas","Varios días a la semana","Una vez por semana","Cada 15 días","Una vez al mes o menos"]},
+  {g:"Viviendas", k:"aguaCisterna", t:"¿Tiene cisterna?", p:0, f:function(m,r){return r.aguaCisterna}, o:["Sí","No"]},
+  {g:"Viviendas", k:"aguaPozo", t:"¿Tiene pozo?", p:0, f:function(m,r){return r.aguaPozo}, o:["Sí","No"]},
+  {g:"Viviendas", k:"luzFrec", t:"¿Cada cuánto se va la luz?", p:0, f:function(m,r){return r.luzFrecuencia}, o:["No se va","Varias veces al día","Una vez al día","Varias veces por semana","Una vez por semana","Rara vez (al mes o menos)"]}
+];
+function varPor(k){ return VARS.filter(function(v){return v.k===k})[0]; }
+function opcionesVars(conNinguna){
+  var html = conNinguna ? '<option value="">— No separar —</option>' : "";
+  ["Personas","Viviendas"].forEach(function(g){
+    html += '<optgroup label="'+g+'">' + VARS.filter(function(v){return v.g===g}).map(function(v){return '<option value="'+v.k+'">'+esc(v.t)+'</option>'}).join("") + '</optgroup>';
+  });
+  return html;
+}
+function initCreador(){
+  $("#gVar").innerHTML = opcionesVars(false);
+  $("#gCruce").innerHTML = opcionesVars(true);
+  $("#gVar").value = "edad";
+  try { var g = JSON.parse(localStorage.getItem("censo.grafica")||"null"); if(g){ $("#gVar").value=g.v||"edad"; $("#gTipo").value=g.t||"barras"; $("#gCruce").value=g.c||""; $("#gModo").value=g.m||"n"; $("#gSinDato").checked=!!g.s; } } catch(e){}
+  ["gVar","gTipo","gCruce","gModo","gSinDato"].forEach(function(id){ $("#"+id).addEventListener("change", function(){
+    try { localStorage.setItem("censo.grafica", JSON.stringify({v:$("#gVar").value,t:$("#gTipo").value,c:$("#gCruce").value,m:$("#gModo").value,s:$("#gSinDato").checked})); } catch(e){}
+    renderGrafica();
+  }); });
+  $("#gPng").addEventListener("click", descargarPng);
+}
+function ordenar(claves, cuenta, orden){
+  var res = orden ? orden.filter(function(k){return claves.indexOf(k)>=0}) : [];
+  var resto = claves.filter(function(k){return res.indexOf(k)<0 && k!=="Sin dato"}).sort(function(a,b){ return orden ? a.localeCompare(b) : cuenta[b]-cuenta[a]; });
+  res = res.concat(resto);
+  if(claves.indexOf("Sin dato")>=0) res.push("Sin dato");
+  return res;
+}
+function datosGrafica(){
+  var A = varPor($("#gVar").value), B = varPor($("#gCruce").value) || null;
+  if(B && B.k===A.k) B=null;
+  var sector = $("#filtroSector").value, sinDato = $("#gSinDato").checked;
+  var porPersona = A.p || (B && B.p);
+  var filas = [];
+  db.forEach(function(r){
+    if(sector && r.sector!==sector) return;
+    if(porPersona) (r.miembros||[]).forEach(function(m){ filas.push([m,r]); });
+    else filas.push([{}, r]);
+  });
+  var tabla = {}, totA = {}, totB = {}, total = 0;
+  filas.forEach(function(x){
+    var a = A.f(x[0],x[1]) || "Sin dato", b = B ? (B.f(x[0],x[1]) || "Sin dato") : "Total";
+    if(!sinDato && (a==="Sin dato" || b==="Sin dato")) return;
+    tabla[a] = tabla[a] || {}; tabla[a][b] = (tabla[a][b]||0)+1;
+    totA[a]=(totA[a]||0)+1; totB[b]=(totB[b]||0)+1; total++;
+  });
+  return { A:A, B:B, unidad: porPersona ? "personas" : "viviendas", tabla:tabla, total:total,
+    cats: ordenar(Object.keys(totA), totA, A.o), series: B ? ordenar(Object.keys(totB), totB, B.o) : ["Total"], totA:totA, totB:totB };
+}
+function fmt(v, modo){ return modo==="pct" ? (Math.round(v*10)/10).toLocaleString("es-DO")+"%" : Math.round(v).toLocaleString("es-DO"); }
+function partir(txt, max){
+  var pal = String(txt).split(" "), lineas=[""];
+  pal.forEach(function(w){ var l=lineas[lineas.length-1]; if((l+" "+w).trim().length>max && l) lineas.push(w); else lineas[lineas.length-1]=(l+" "+w).trim(); });
+  return lineas.slice(0,3);
+}
+function svgEl(tag, at, txt){
+  var e = '<'+tag; for(var k in at) e += ' '+k+'="'+esc(at[k])+'"';
+  return txt!=null ? e+'>'+esc(txt)+'</'+tag+'>' : e+'/>';
+}
+var gActual = null;
+function renderGrafica(){
+  var d = datosGrafica(), tipo = $("#gTipo").value, modo = $("#gModo").value;
+  var box = $("#gBox"), tip = $("#gTip");
+  $$("svg", box).forEach(function(n){ n.remove(); });
+  $("#gLeyenda").innerHTML = ""; $("#gTabla").innerHTML = "";
+  var titulo = d.A.t + (d.B ? " según " + d.B.t.toLowerCase() : "");
+  if(!d.total){ $("#gNota").textContent = "Todavía no hay datos para esta gráfica."; gActual=null; return; }
+  if(d.B && (tipo==="pastel"||tipo==="dona")){ tipo="barras"; }
+  $("#gNota").textContent = "Contando " + d.total + " " + d.unidad + (d.B && ($("#gTipo").value==="pastel"||$("#gTipo").value==="dona") ? ". Al separar por otro dato se usan barras apiladas." : ".");
+  var W=Math.max(320, Math.min(760, Math.round(box.clientWidth||680))), svg="", marcas=[];
+  // valor según modo: % del total de la categoría (si hay cruce) o del total general
+  function val(a,b){ var n=(d.tabla[a]&&d.tabla[a][b])||0; if(modo!=="pct") return n; return d.B ? n*100/(d.totA[a]||1) : n*100/(d.total||1); }
+  var color = function(i){ return COLORES[i % COLORES.length]; };
+  var H;
+  if(tipo==="pastel"||tipo==="dona"){
+    // juntar categorías pequeñas en "Otros" si hay más de 8
+    var cats = d.cats.slice(), cuenta = {};
+    cats.forEach(function(c){ cuenta[c]=d.totA[c]; });
+    if(cats.length>8){ var otros = cats.slice(7); cats = cats.slice(0,7).concat(["Otros"]); cuenta["Otros"] = otros.reduce(function(s,c){return s+d.totA[c]},0); }
+    var R=Math.min(165,(W-20)/2); H=2*R+20; var cx=W/2, cy=H/2, r0 = tipo==="dona" ? R*0.58 : 0, ang=-Math.PI/2;
+    cats.forEach(function(c,i){
+      var frac = cuenta[c]/d.total, a2 = ang + frac*2*Math.PI;
+      var large = (a2-ang)>Math.PI ? 1 : 0;
+      var p1=[cx+R*Math.cos(ang),cy+R*Math.sin(ang)], p2=[cx+R*Math.cos(a2),cy+R*Math.sin(a2)];
+      var path;
+      if(frac>=0.9999){ path = r0 ? "M"+(cx-R)+","+cy+"a"+R+","+R+" 0 1,0 "+(2*R)+",0a"+R+","+R+" 0 1,0 "+(-2*R)+",0M"+(cx-r0)+","+cy+"a"+r0+","+r0+" 0 1,1 "+(2*r0)+",0a"+r0+","+r0+" 0 1,1 "+(-2*r0)+",0" : "M"+(cx-R)+","+cy+"a"+R+","+R+" 0 1,0 "+(2*R)+",0a"+R+","+R+" 0 1,0 "+(-2*R)+",0"; }
+      else if(r0){ var q1=[cx+r0*Math.cos(a2),cy+r0*Math.sin(a2)], q2=[cx+r0*Math.cos(ang),cy+r0*Math.sin(ang)];
+        path="M"+p1+"A"+R+","+R+" 0 "+large+",1 "+p2+"L"+q1+"A"+r0+","+r0+" 0 "+large+",0 "+q2+"Z"; }
+      else path="M"+cx+","+cy+"L"+p1+"A"+R+","+R+" 0 "+large+",1 "+p2+"Z";
+      var pct = frac*100, etiqueta = c+": "+cuenta[c]+" ("+fmt(pct,"pct")+")";
+      marcas.push(etiqueta);
+      svg += svgEl("path",{d:path, fill:color(i), stroke:"#ffffff", "stroke-width":2, "fill-rule":"evenodd", "data-i":marcas.length-1});
+      if(pct>=6){ var am=(ang+a2)/2, rl = r0 ? (R+r0)/2 : R*0.62;
+        svg += svgEl("text",{x:cx+rl*Math.cos(am), y:cy+rl*Math.sin(am)+5, "text-anchor":"middle", "font-size":15, "font-weight":700, fill:"#ffffff", stroke:"rgba(0,0,0,.35)", "stroke-width":3, "paint-order":"stroke"}, modo==="pct"?fmt(pct,"pct"):String(cuenta[c])); }
+      ang = a2;
+    });
+    if(r0) svg += svgEl("text",{x:cx,y:cy-4,"text-anchor":"middle","font-size":30,"font-weight":700,fill:"#15202b"}, String(d.total)) + svgEl("text",{x:cx,y:cy+20,"text-anchor":"middle","font-size":14,fill:"#56616d"}, d.unidad);
+    $("#gLeyenda").innerHTML = cats.map(function(c,i){ return '<span><i style="background:'+color(i)+'"></i>'+esc(c)+' · '+cuenta[c]+'</span>'; }).join("");
+  } else {
+    var series = d.series, cats = d.cats;
+    var maxV = 0;
+    cats.forEach(function(a){ var s=0; series.forEach(function(b){ s+=val(a,b); }); maxV=Math.max(maxV,s); });
+    if(modo==="pct" && d.B) maxV = 100;
+    // escala "bonita"
+    var paso = Math.pow(10, Math.floor(Math.log10(maxV||1))); var tope = Math.ceil((maxV||1)/paso)*paso;
+    if(tope/paso<=2) paso/=2; var marcasEje=[]; for(var v=0; v<=tope+1e-9; v+=paso) marcasEje.push(v);
+    if(tipo==="hbarras"){
+      var izq=Math.min(170, Math.round(W*0.36)), der=56, fila=Math.max(30, 18+series.length*0), top=10; H = top + cats.length*fila + 30;
+      var ancho = W-izq-der, sx = function(v){ return izq + v/tope*ancho; };
+      marcasEje.forEach(function(v){ svg += svgEl("line",{x1:sx(v),x2:sx(v),y1:top,y2:H-26,stroke:"#e3e8ee"}) + svgEl("text",{x:sx(v),y:H-8,"text-anchor":"middle","font-size":12,fill:"#56616d"}, fmt(v,modo)); });
+      cats.forEach(function(a,ci){
+        var y = top + ci*fila + 5, h = fila-10, x0 = izq;
+        partir(a, Math.max(10, Math.floor(izq/7.5))).forEach(function(l,li,arr){ svg += svgEl("text",{x:izq-8, y:y+h/2+4+(li-(arr.length-1)/2)*14, "text-anchor":"end","font-size":13,fill:"#15202b"}, l); });
+        var acum=0;
+        series.forEach(function(b,si){ var v=val(a,b); if(!v) return;
+          var w = v/tope*ancho; marcas.push(a+(d.B?" · "+b:"")+": "+fmt(v,modo));
+          svg += svgEl("rect",{x:x0, y:y, width:Math.max(w-(d.B?2:0),1), height:h, rx:3, fill:color(d.B?si:0), "data-i":marcas.length-1});
+          x0 += w; acum += v; });
+        svg += svgEl("text",{x:x0+6, y:y+h/2+5, "font-size":13, "font-weight":600, fill:"#15202b"}, fmt(acum,modo));
+      });
+    } else {
+      var izq2=46, maxLineas=1, maxCh = Math.max(6, Math.floor((W-56)/cats.length/6.5)); cats.forEach(function(a){ maxLineas=Math.max(maxLineas, partir(a, maxCh).length); });
+      H = 320 + maxLineas*15; var top2=24, abajo = 20 + maxLineas*15, alto = H-top2-abajo;
+      var anchoC = (W-izq2-10)/cats.length, bw = Math.min(70, anchoC*0.7);
+      var sy = function(v){ return top2 + alto - v/tope*alto; };
+      marcasEje.forEach(function(v){ svg += svgEl("line",{x1:izq2,x2:W-10,y1:sy(v),y2:sy(v),stroke:"#e3e8ee"}) + svgEl("text",{x:izq2-6,y:sy(v)+4,"text-anchor":"end","font-size":12,fill:"#56616d"}, fmt(v,modo)); });
+      cats.forEach(function(a,ci){
+        var x = izq2 + ci*anchoC + (anchoC-bw)/2, y0 = sy(0), acum=0;
+        series.forEach(function(b,si){ var v=val(a,b); if(!v) return;
+          var h = v/tope*alto; marcas.push(a+(d.B?" · "+b:"")+": "+fmt(v,modo));
+          svg += svgEl("rect",{x:x, y:y0-h+(d.B?2:0), width:bw, height:Math.max(h-(d.B?2:0),1), rx:3, fill:color(d.B?si:0), "data-i":marcas.length-1});
+          y0 -= h; acum += v; });
+        svg += svgEl("text",{x:x+bw/2, y:y0-6, "text-anchor":"middle", "font-size":13, "font-weight":600, fill:"#15202b"}, fmt(acum,modo));
+        partir(a, maxCh).forEach(function(l,li){ svg += svgEl("text",{x:x+bw/2, y:H-abajo+18+li*15, "text-anchor":"middle", "font-size":12, fill:"#15202b"}, l); });
+      });
+      svg += svgEl("line",{x1:izq2,x2:W-10,y1:sy(0),y2:sy(0),stroke:"#8a96a3"});
+    }
+    if(d.B) $("#gLeyenda").innerHTML = series.map(function(b,i){ return '<span><i style="background:'+color(i)+'"></i>'+esc(b)+'</span>'; }).join("");
+  }
+  var head = svgEl("text",{x:0,y:18,"font-size":17,"font-weight":700,fill:"#15202b"}, titulo) +
+             svgEl("text",{x:0,y:38,"font-size":13,fill:"#56616d"}, ($("#filtroSector").value||"Todos los sectores")+" · "+d.total+" "+d.unidad+(modo==="pct"?" · en porcentaje":""));
+  var Ht = H + 50;
+  var markup = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+Ht+'" font-family="Roboto, Arial, Helvetica, sans-serif" role="img" aria-label="'+esc(titulo)+'"><rect width="'+W+'" height="'+Ht+'" fill="#ffffff"/>'+head+'<g transform="translate(0,50)">'+svg+'</g></svg>';
+  box.insertAdjacentHTML("afterbegin", markup);
+  gActual = {titulo:titulo, svg:$("svg",box)};
+  // tooltip
+  var svgNode = $("svg", box);
+  function mostrar(e){
+    var t = e.target.closest("[data-i]"); if(!t){ tip.classList.remove("show"); return; }
+    var rb = box.getBoundingClientRect(), pt = e.touches ? e.touches[0] : e;
+    tip.textContent = marcas[+t.dataset.i]; tip.style.left=(pt.clientX-rb.left)+"px"; tip.style.top=(pt.clientY-rb.top)+"px"; tip.classList.add("show");
+  }
+  svgNode.addEventListener("mousemove", mostrar); svgNode.addEventListener("click", mostrar);
+  svgNode.addEventListener("mouseleave", function(){ tip.classList.remove("show"); });
+  // tabla
+  var cols = d.series;
+  var t = '<table class="tbl"><thead><tr><th>'+esc(d.A.t)+'</th>'+(d.B?cols.map(function(b){return '<th>'+esc(b)+'</th>'}).join(""):"")+'<th>Total</th><th>%</th></tr></thead><tbody>';
+  d.cats.forEach(function(a){
+    t += '<tr><td>'+esc(a)+'</td>'+(d.B?cols.map(function(b){return '<td>'+((d.tabla[a]&&d.tabla[a][b])||0)+'</td>'}).join(""):"")+'<td>'+d.totA[a]+'</td><td>'+fmt(d.totA[a]*100/d.total,"pct")+'</td></tr>';
+  });
+  t += '<tr><th>Total</th>'+(d.B?cols.map(function(b){return '<th>'+d.totB[b]+'</th>'}).join(""):"")+'<th>'+d.total+'</th><th>100%</th></tr></tbody></table>';
+  $("#gTabla").innerHTML = t;
+}
+function descargarPng(){
+  if(!gActual){ toast("No hay gráfica para descargar"); return; }
+  var svg = gActual.svg, vb = svg.viewBox.baseVal, esc2 = 2;
+  var xml = new XMLSerializer().serializeToString(svg);
+  var img = new Image();
+  img.onload = function(){
+    var c = document.createElement("canvas"); c.width = vb.width*esc2; c.height = vb.height*esc2;
+    var ctx = c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
+    var nombre = "grafica_"+gActual.titulo.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"")+".png";
+    if(window.AndroidBridge && AndroidBridge.saveFile){ AndroidBridge.saveFile(nombre, c.toDataURL("image/png").split(",")[1], "image/png"); return; }
+    c.toBlob(function(b){ var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=nombre; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();},1000); });
+  };
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+}
+
+function alquilerCard(V){
+  var a = V.map(function(r){return +r.alquiler}).filter(function(x){return x>0});
+  if(!a.length) return "";
+  var prom = Math.round(a.reduce(function(s,x){return s+x},0)/a.length);
+  return '<div class="card"><h2>Alquiler</h2><p style="margin:0">'+a.length+' vivienda(s) informaron el alquiler. Promedio: <b>RD$ '+prom.toLocaleString("es-DO")+'</b> al mes (mín. RD$ '+Math.min.apply(null,a).toLocaleString("es-DO")+', máx. RD$ '+Math.max.apply(null,a).toLocaleString("es-DO")+').</p></div>';
+}
+$("#filtroSector").addEventListener("change", renderStats);
+var _rz; window.addEventListener("resize", function(){ clearTimeout(_rz); _rz=setTimeout(function(){ if(!$("#tab-stats").classList.contains("hide")) renderGrafica(); },200); });
+var _renderStats = renderStats; renderStats = function(){ _renderStats(); renderGrafica(); };
+
+/* ---------- exportar / importar ---------- */
+function descargar(nombre, contenido, tipo){
+  var blob = new Blob([contenido], {type:tipo});
+  // Dentro de la app Android se usa el puente nativo para guardar en Descargas
+  if(window.AndroidBridge && AndroidBridge.saveFile){
+    var rd=new FileReader(); rd.onload=function(){ AndroidBridge.saveFile(nombre, rd.result.split(",")[1], tipo); }; rd.readAsDataURL(blob); return;
+  }
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nombre;
+  document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+var COLS_V = ["id","sector","vivienda","direccion","tipoVivienda","tenencia","alquiler","viveSolo","personasHogar","servicios",
+  "aguaSiempre","aguaFrecuencia","aguaCisterna","aguaPozo","aguaMaxSin","aguaMaxSinUnidad",
+  "luzFrecuencia","luzRegresa","luzRegresaUnidad","luzMaxSin","luzMaxSinUnidad","encuestador","fecha","notas"];
+var COLS_M = ["nombre","parentesco","sexo","nacimiento","edad","cedula","telefono","estadoCivil","nacionalidad","alfabetizado","estudia","nivel","trabaja","ocupacion","tieneHijos","hijos","religion","seguro","salud"];
+function csvCell(v){ v = Array.isArray(v) ? v.join("; ") : (v==null?"":String(v)); return /[",;\n\r]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+$("#expCsv").addEventListener("click", function(){
+  if(!db.length){ toast("No hay datos"); return; }
+  var head = COLS_V.map(function(c){return c==="id"?"id_vivienda":c}).concat(["no_persona"], COLS_M);
+  var rows=[head.join(",")];
+  db.forEach(function(r){ (r.miembros||[]).forEach(function(m,i){
+    rows.push(COLS_V.map(function(c){return csvCell(r[c])}).concat([i+1], COLS_M.map(function(c){return csvCell(m[c])})).join(","));
+  }); });
+  descargar("censo_"+hoy()+".csv", "﻿"+rows.join("\r\n"), "text/csv;charset=utf-8");
+});
+$("#expJson").addEventListener("click", function(){
+  if(!db.length){ toast("No hay datos"); return; }
+  descargar("censo_respaldo_"+hoy()+".json", JSON.stringify({app:"censo-comunitario",version:1,exportado:new Date().toISOString(),registros:db},null,1), "application/json");
+});
+$("#impFile").addEventListener("change", function(e){
+  var file=e.target.files[0]; if(!file) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var data=JSON.parse(rd.result), regs = Array.isArray(data) ? data : data.registros;
+      if(!Array.isArray(regs)) throw new Error("formato no reconocido");
+      var nuevos=0, act=0;
+      regs.forEach(function(r){
+        if(!r || !r.id) return;
+        var i=db.findIndex(function(x){return x.id===r.id});
+        if(i<0){ db.push(r); nuevos++; }
+        else if((r.actualizado||"")>(db[i].actualizado||"")){ db[i]=r; act++; }
+      });
+      save(db); updateSectores(); updateHeader();
+      toast(nuevos+" nuevos, "+act+" actualizados");
+    }catch(err){ toast("Archivo no válido: "+err.message); }
+    e.target.value="";
+  };
+  rd.readAsText(file);
+});
+$("#borrarTodo").addEventListener("click", function(){
+  if(!db.length){ toast("No hay datos"); return; }
+  if(prompt("Escribe BORRAR para eliminar los "+db.length+" registros")==="BORRAR"){ db=[]; save(db); updateHeader(); toast("Todo borrado"); }
+});
+
+/* ---------- utilidades ---------- */
+function updateSectores(){
+  var s = Array.from(new Set(db.map(function(r){return r.sector}).filter(Boolean))).sort();
+  $("#sectores").innerHTML = s.map(function(x){return '<option value="'+esc(x)+'">'}).join("");
+}
+function updateHeader(){
+  var p = db.reduce(function(s,r){return s+(r.miembros||[]).length},0);
+  $("#hdrInfo").textContent = db.length+" viviendas · "+p+" personas · funciona sin internet";
+}
+
+/* ---------- versión y aviso de actualización ---------- */
+function revisarVersion(){
+  var info = window.APP_INFO || {version:0, repo:""};
+  $("#versionApp").textContent = info.version ? "Versión 1."+info.version : "Versión de prueba";
+  // Solo en la app Android, con internet y cuando se sabe de qué repositorio viene
+  if(!window.AndroidBridge || !info.repo || !info.version || !navigator.onLine || !window.fetch) return;
+  fetch("https://api.github.com/repos/"+info.repo+"/releases/latest", {headers:{"Accept":"application/vnd.github+json"}})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(rel){
+      if(!rel || !rel.tag_name) return;
+      var nueva = parseInt(String(rel.tag_name).replace(/\D/g,""),10);
+      if(!(nueva > info.version)) return;
+      $("#avisoTexto").textContent = "Hay una versión nueva (1."+nueva+"). Tus registros se conservan al actualizar.";
+      var url = "https://github.com/"+info.repo+"/releases/latest/download/censo.apk";
+      $("#avisoBtn").onclick = function(e){ e.preventDefault(); if(AndroidBridge.openUrl) AndroidBridge.openUrl(url); else location.href=url; };
+      $("#avisoVersion").classList.remove("hide");
+    }).catch(function(){});
+}
+
+segmentar(f);
+revisarVersion();
+resetForm(); updateSectores(); updateHeader(); initCreador();
+if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
+  navigator.serviceWorker.register("sw.js").catch(function(){});
+}
+})();
+</script>
+</body>
+</html>
