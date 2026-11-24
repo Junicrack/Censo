@@ -1,0 +1,55 @@
+name: Construir y publicar APK
+
+# Se ejecuta solo cada vez que cambia la app (www/) o el proyecto Android.
+on:
+  push:
+    branches: [main]
+    paths: ["www/**", "android/**", ".github/workflows/apk.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Revisar la llave de firma
+        env:
+          KEYSTORE_BASE64: ${{ secrets.CENSO_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.CENSO_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Faltan los secretos CENSO_KEYSTORE_BASE64 y CENSO_KEYSTORE_PASSWORD (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/censo.keystore"
+
+      - name: Marcar la versión dentro de la app
+        run: |
+          echo "window.APP_INFO = { version: ${{ github.run_number }}, repo: \"${{ github.repository }}\" };" > www/version.js
+
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: android-actions/setup-android@v3
+
+      - name: Construir APK firmado
+        working-directory: android
+        env:
+          CENSO_KEYSTORE_FILE: ${{ runner.temp }}/censo.keystore
+          CENSO_KEYSTORE_PASSWORD: ${{ secrets.CENSO_KEYSTORE_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease -PversionCode=${{ github.run_number }}
+          cp app/build/outputs/apk/release/app-release.apk ../censo.apk
+
+      - name: Publicar versión
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Censo versión 1.${{ github.run_number }}
+          body: ${{ github.event.head_commit.message }}
+          files: censo.apk
+          make_latest: "true"
