@@ -37,6 +37,24 @@ La llave está en la carpeta `firma/`, que nunca se sube a GitHub.
 También se puede construir a mano en Android Studio (abrir la carpeta `android/`,
 Build → Build APK), pero ese APK no lleva la firma fija.
 
+## Nube, usuarios y cierre del censo
+
+Los datos se guardan en Supabase (proyecto `censo-comunitario`). La app sigue
+funcionando sin señal: cada registro queda en el teléfono como "pendiente" y
+sube solo cuando vuelve la conexión.
+
+- **Primer uso:** la app pide crear el **administrador** (solo se puede una vez).
+- **Roles:** censador (registra y ve solo lo suyo), manager (ve todo, resumen,
+  gráficas y Excel; no edita) y admin (todo, más usuarios y cierre).
+- **Usuarios:** el admin los crea en la pestaña Admin con usuario y clave.
+  Puede cambiar claves, roles y desactivar a quien ya no participe.
+- **Cerrar el censo:** pestaña Admin, "Cerrar ingreso de datos". La base de
+  datos rechaza desde ese momento cualquier registro nuevo o cambio.
+- **Excel:** pestaña Datos, archivo .xlsx con hojas Resumen, Viviendas y Personas.
+
+Archivos del servidor en `supabase/`: `001_esquema.sql` (tablas y permisos) y
+`functions/usuarios` (crear y administrar usuarios).
+
 ## Cómo se trabaja en el campo
 
 1. Cada encuestador usa su teléfono y llena un registro por vivienda, con

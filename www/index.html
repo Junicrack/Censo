@@ -20,7 +20,7 @@ header{background:var(--brand);color:var(--brand-ink);padding:14px 16px;padding-
 header h1{margin:0;font-size:20px}
 header small{opacity:.9}
 nav{display:flex;gap:6px;padding:8px 10px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4;overflow-x:auto;box-shadow:0 2px 6px rgba(20,40,60,.06)}
-nav button{flex:1 1 auto;min-width:0;border:0;border-radius:999px;background:var(--opt);color:var(--opt-ink);padding:10px 12px;font-size:15px;font-weight:600;white-space:nowrap;cursor:pointer}
+nav button{flex:1 0 auto;min-width:0;border:0;border-radius:999px;background:var(--opt);color:var(--opt-ink);padding:10px 12px;font-size:15px;font-weight:600;white-space:nowrap;cursor:pointer}
 nav button.on{background:var(--brand);color:var(--brand-ink)}
 main{max-width:760px;margin:0 auto;padding:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,40,60,.05)}
@@ -84,19 +84,72 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
 .tbl th,.tbl td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
 .tbl th:first-child,.tbl td:first-child{text-align:left}
 .tbl thead th{color:var(--muted);font-weight:600}
+/* Sesión, sincronización y administración */
+.login{position:fixed;inset:0;z-index:30;background:var(--bg);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px}
+.login .card{width:100%;max-width:400px}
+.login h1{margin:0 0 4px;color:var(--brand-dark);font-size:24px}
+.login .err{color:var(--danger);font-weight:600;min-height:20px;margin:8px 0 0}
+.userbar{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px}
+.userbar .btn{background:rgba(255,255,255,.18);color:#fff;padding:5px 10px;font-size:13px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:var(--opt);color:var(--opt-ink)}
+.pill.pend{background:var(--s4);color:#15202b}
+.pill.err{background:var(--danger);color:#fff}
+.pill.ok{background:var(--brand-soft);color:var(--brand-dark)}
+.aviso{border-radius:12px;padding:12px 14px;margin-bottom:14px;font-weight:600}
+.aviso.cerrado{background:#fdecea;color:#8c1d18;border:1px solid #f3b8b3}
+.aviso.info{background:#eaf2fd;color:#123e7a;border:1px solid #bcd3f5}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+fieldset:disabled .seg button,fieldset:disabled .chips label{opacity:.6;cursor:not-allowed}
+.uitem{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.uitem:last-child{border-bottom:0}
+.uitem .acc{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.uitem select{width:auto;padding:6px 8px;font-size:14px}
+.estado-censo{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.estado-censo b{font-size:18px}
 details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-top:12px}
 </style>
 </head>
 <body>
+<!-- ============ INICIO DE SESIÓN ============ -->
+<div class="login" id="login">
+  <div class="card" id="loginCard">
+    <h1>Censo Comunitario</h1>
+    <p class="muted" style="margin-top:0">Entra con el usuario y la clave que te dio el administrador.</p>
+    <form id="fLogin" autocomplete="on">
+      <div style="margin-bottom:12px"><label>Usuario</label><input name="usuario" autocapitalize="none" autocomplete="username" required></div>
+      <div style="margin-bottom:12px"><label>Clave</label><input name="clave" type="password" autocomplete="current-password" required></div>
+      <button class="btn" type="submit" style="width:100%">Entrar</button>
+      <p class="err" id="loginErr"></p>
+    </form>
+    <p class="muted" id="loginOffline" class="hide"></p>
+  </div>
+  <div class="card hide" id="inicialCard">
+    <h1>Crear administrador</h1>
+    <p class="muted" style="margin-top:0">Todavía no hay ningún usuario. Crea la cuenta del administrador del censo. Solo se puede hacer una vez.</p>
+    <form id="fInicial">
+      <div style="margin-bottom:12px"><label>Tu nombre</label><input name="nombre" required></div>
+      <div style="margin-bottom:12px"><label>Usuario (sin espacios)</label><input name="usuario" autocapitalize="none" required pattern="[A-Za-z0-9._\-]{3,30}"></div>
+      <div style="margin-bottom:12px"><label>Clave (mínimo 6 caracteres)</label><input name="clave" type="password" minlength="6" required></div>
+      <button class="btn" type="submit" style="width:100%">Crear y entrar</button>
+      <p class="err" id="inicialErr"></p>
+    </form>
+  </div>
+</div>
+
 <header>
   <h1>Censo Comunitario</h1>
-  <small id="hdrInfo">Funciona sin internet · los datos se guardan en este equipo</small>
+  <small id="hdrInfo"></small>
+  <div class="userbar">
+    <small><span id="hdrUser"></span> · <span id="hdrSync" class="pill ok">—</span></small>
+    <span><button class="btn" id="btnSync" type="button">Sincronizar</button> <button class="btn" id="btnSalir" type="button">Salir</button></span>
+  </div>
 </header>
 <nav>
   <button data-tab="form" class="on">Registrar</button>
   <button data-tab="list">Registros</button>
   <button data-tab="stats">Resumen</button>
   <button data-tab="data">Datos</button>
+  <button data-tab="admin">Admin</button>
 </nav>
 
 <div id="avisoVersion" class="update hide">
@@ -106,7 +159,9 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
 <main>
 <!-- ============ FORMULARIO ============ -->
 <section id="tab-form">
-  <form id="f" autocomplete="off">
+  <div class="aviso cerrado hide" id="avisoCerrado">El ingreso de datos está cerrado. No se pueden agregar ni cambiar registros.</div>
+  <div class="aviso info hide" id="avisoLectura">Estás viendo un registro (solo lectura). <a href="#" id="salirLectura">Volver</a></div>
+  <form id="f" autocomplete="off"><fieldset id="fs">
     <input type="hidden" name="id">
     <div class="card">
       <h2>Vivienda</h2>
@@ -166,7 +221,7 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
     <div class="card">
       <h2>Observaciones</h2>
       <div class="grid">
-        <div><label>Encuestador(a)</label><input name="encuestador" id="encuestador"></div>
+        <div><label>Censador(a)</label><input name="encuestador" id="encuestador" readonly></div>
         <div><label>Fecha</label><input type="date" name="fecha"></div>
         <div class="full"><label>Notas</label><textarea name="notas"></textarea></div>
       </div>
@@ -176,7 +231,7 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
       <button class="btn" type="submit" id="btnGuardar">Guardar registro</button>
       <button class="btn sec" type="button" id="btnLimpiar">Limpiar</button>
     </div>
-  </form>
+  </fieldset></form>
 </section>
 
 <!-- ============ LISTA ============ -->
@@ -218,24 +273,57 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
 <!-- ============ DATOS ============ -->
 <section id="tab-data" class="hide">
   <div class="card">
-    <h2>Exportar</h2>
-    <p class="muted">Descarga los datos para abrirlos en Excel o para unirlos con los de otros encuestadores.</p>
-    <div class="row">
-      <button class="btn" id="expCsv">Excel (CSV, una fila por persona)</button>
-      <button class="btn sec" id="expJson">Respaldo completo (JSON)</button>
+    <h2>Sincronización</h2>
+    <p class="muted" id="syncDetalle" style="margin-top:0"></p>
+    <button class="btn" id="btnSync2" type="button">Sincronizar ahora</button>
+  </div>
+  <div class="card" data-rol="manager admin">
+    <h2>Exportar a Excel</h2>
+    <p class="muted" style="margin-top:0">Un archivo .xlsx con tres hojas: <b>Resumen</b> (totales y tablas), <b>Viviendas</b> (una fila por casa) y <b>Personas</b> (una fila por persona). Usa el filtro por sector del Resumen si quieres un solo sector.</p>
+    <button class="btn" id="expXlsx" type="button">Descargar Excel</button>
+  </div>
+  <div class="card">
+    <h2>Respaldo</h2>
+    <p class="muted" style="margin-top:0">Copia de seguridad en formato JSON de los registros que ves en este teléfono.</p>
+    <button class="btn sec" id="expJson" type="button">Descargar respaldo (JSON)</button>
+  </div>
+  <div class="card hide" id="migrarCard">
+    <h2>Registros guardados antes en este teléfono</h2>
+    <p class="muted" style="margin-top:0" id="migrarTxt"></p>
+    <button class="btn" id="btnMigrar" type="button">Subirlos a la nube</button>
+  </div>
+  <div class="card" data-rol="admin">
+    <h2>Importar respaldo</h2>
+    <p class="muted" style="margin-top:0">Sube a la nube un respaldo JSON (por ejemplo, de antes de usar la nube). Los repetidos se actualizan, no se duplican.</p>
+    <input type="file" id="impFile" accept=".json,application/json">
+  </div>
+  <p class="muted" id="versionApp" style="text-align:center"></p>
+</section>
+
+<!-- ============ ADMIN ============ -->
+<section id="tab-admin" class="hide">
+  <div class="card">
+    <h2>Ingreso de datos</h2>
+    <div class="estado-censo">
+      <div><b id="estadoCenso">—</b><div class="muted" id="estadoCensoDet"></div></div>
+      <button class="btn" id="btnCenso" type="button">—</button>
     </div>
   </div>
   <div class="card">
-    <h2>Importar / unir</h2>
-    <p class="muted">Carga un respaldo JSON de otro equipo. Los registros repetidos se actualizan, no se duplican.</p>
-    <input type="file" id="impFile" accept=".json,application/json">
+    <h2>Crear usuario</h2>
+    <form id="fUsuario" class="grid">
+      <div><label>Nombre completo</label><input name="nombre" required></div>
+      <div><label>Usuario (sin espacios)</label><input name="usuario" autocapitalize="none" required pattern="[A-Za-z0-9._\-]{3,30}" placeholder="ej. maria.p"></div>
+      <div><label>Clave (mínimo 6)</label><input name="clave" minlength="6" required></div>
+      <div><label>Rol</label><select name="rol" required><option></option><option value="censador">censador</option><option value="manager">manager</option><option value="admin">admin</option></select></div>
+      <div class="full"><button class="btn" type="submit">Crear usuario</button> <span class="err" id="uErr" style="color:var(--danger);font-weight:600"></span></div>
+    </form>
+    <p class="muted" style="margin-bottom:0"><b>Censador:</b> registra viviendas y ve solo las suyas. <b>Manager:</b> ve todo, el resumen y exporta; no edita. <b>Admin:</b> todo, más usuarios y cierre del censo.</p>
   </div>
   <div class="card">
-    <h2>Borrar todo</h2>
-    <p class="muted">Elimina todos los registros de este equipo. Exporta un respaldo antes.</p>
-    <button class="btn danger" id="borrarTodo">Borrar todos los registros</button>
+    <h2>Usuarios</h2>
+    <div id="listaUsuarios"><p class="muted">Cargando…</p></div>
   </div>
-  <p class="muted" id="versionApp" style="text-align:center"></p>
 </section>
 </main>
 
@@ -281,11 +369,16 @@ details summary{cursor:pointer;color:var(--brand-dark);font-weight:600;margin-to
 
 <div class="toast" id="toast"></div>
 <script src="version.js"></script>
+<script src="lib/supabase.js"></script>
 
 <script>
 (function(){
 "use strict";
-var KEY = "censo.registros.v1";
+var KEY = "censo.registros.v2";       // copia local de los registros (nube + pendientes)
+var KEY_VIEJO = "censo.registros.v1"; // registros de antes de la nube
+var SUPA_URL = "https://aodaaclzvzbntrdnwxtc.supabase.co";
+var SUPA_KEY = "sb_publishable_i7JbNRkswFefreVcyd_lPg_83CUGs8x";
+var DOMINIO = "censo.app";
 var $ = function(s, r){ return (r||document).querySelector(s); };
 var $$ = function(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
 
@@ -305,11 +398,17 @@ function hoy(){ var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffse
 $$("nav button").forEach(function(b){
   b.addEventListener("click", function(){ show(b.dataset.tab); });
 });
+var TABS = { censador:["form","list","data"], manager:["list","stats","data"], admin:["form","list","stats","data","admin"] };
 function show(tab){
-  $$("nav button").forEach(function(b){ b.classList.toggle("on", b.dataset.tab===tab); });
-  ["form","list","stats","data"].forEach(function(t){ $("#tab-"+t).classList.toggle("hide", t!==tab); });
+  var permitidas = TABS[(perfil&&perfil.rol)||"censador"];
+  if(permitidas.indexOf(tab)<0) tab = permitidas[0];
+  $$("nav button").forEach(function(b){ b.classList.toggle("on", b.dataset.tab===tab); b.classList.toggle("hide", permitidas.indexOf(b.dataset.tab)<0); });
+  ["form","list","stats","data","admin"].forEach(function(t){ $("#tab-"+t).classList.toggle("hide", t!==tab); });
   if(tab==="list") renderList();
   if(tab==="stats") renderStats();
+  if(tab==="data") renderDatos();
+  if(tab==="admin") renderAdmin();
+  if(tab==="form" && soloLectura) salirLectura();
   window.scrollTo(0,0);
 }
 
@@ -399,9 +498,10 @@ function resetForm(){
   f.reset(); f.id.value="";
   $("#miembros").innerHTML=""; addMiembro();
   f.fecha.value = hoy();
-  try { f.encuestador.value = localStorage.getItem("censo.encuestador") || ""; } catch(e){}
+  f.encuestador.value = perfil ? perfil.nombre : "";
   $("#btnGuardar").textContent="Guardar registro";
   condiciones();
+  aplicarBloqueo();
 }
 function fillForm(r){
   resetForm();
@@ -435,12 +535,15 @@ f.addEventListener("submit", function(e){
     r[k] = el.type==="checkbox" ? (el.checked?"Sí":"No") : el.value.trim();
   });
   ["aguaMaxSin","luzRegresa","luzMaxSin"].forEach(function(k){ if(r[k]==="") r[k+"Unidad"]=""; });
+  if(!puedeEscribir()){ toast("El ingreso de datos está cerrado"); return; }
   var i = db.findIndex(function(x){return x.id===r.id});
-  if(i>=0){ r.creado = db[i].creado; db[i]=r; } else { r.creado = r.actualizado; db.push(r); }
+  if(i>=0){ r.creado = db[i].creado; r._censador = db[i]._censador; r._censadorId = db[i]._censadorId; db[i]=r; }
+  else { r.creado = r.actualizado; r._censador = perfil.nombre; r._censadorId = sesionId; db.push(r); }
+  r._pend = true; delete r._err;
   if(save(db)){
-    try { localStorage.setItem("censo.encuestador", r.encuestador); } catch(e){}
-    toast(i>=0 ? "Cambios guardados" : "Registro guardado ("+db.length+" en total)");
+    toast(i>=0 ? "Cambios guardados" : "Registro guardado");
     resetForm(); updateSectores(); updateHeader(); window.scrollTo(0,0);
+    sincronizar();
   }
 });
 $("#btnLimpiar").addEventListener("click", function(){ if(confirm("¿Limpiar el formulario?")) resetForm(); });
@@ -455,21 +558,48 @@ function renderList(){
   });
   var personas = db.reduce(function(s,r){return s+(r.miembros||[]).length},0);
   $("#cuenta").textContent = db.length+" viviendas · "+personas+" personas" + (q ? " · "+items.length+" coinciden" : "");
+  var rol = perfil ? perfil.rol : "censador", editar = puedeEscribir() && rol!=="manager";
   $("#lista").innerHTML = items.length ? items.map(function(r){
     var jefe = (r.miembros||[])[0]||{};
+    var estado = r._err ? '<span class="pill err">No se subió: '+esc(r._err)+'</span> ' : r._pend ? '<span class="pill pend">Pendiente de subir</span> ' : '';
+    var quien = rol!=="censador" && r._censador ? ' · por '+esc(r._censador) : '';
+    var btns = editar ? '<button class="btn sec sm" data-ed="'+r.id+'">Editar</button>' : '<button class="btn sec sm" data-ver="'+r.id+'">Ver</button>';
+    if(rol==="admin" || (r._pend && !r._enNube)) btns += '<button class="btn danger sm" data-del="'+r.id+'">Borrar</button>';
     return '<div class="item"><div><b>'+esc(jefe.nombre||"(sin nombre)")+'</b>'+
-      '<span class="muted">'+esc(r.sector)+(r.vivienda?' · Viv. '+esc(r.vivienda):'')+' · '+(r.miembros||[]).length+' persona(s) · '+esc(r.fecha||'')+'</span></div>'+
-      '<div class="row" style="flex-wrap:nowrap"><button class="btn sec sm" data-ed="'+r.id+'">Editar</button><button class="btn danger sm" data-del="'+r.id+'">Borrar</button></div></div>';
+      '<span class="muted">'+esc(r.sector)+(r.vivienda?' · Viv. '+esc(r.vivienda):'')+' · '+(r.miembros||[]).length+' persona(s) · '+esc(r.fecha||'')+quien+'</span>'+(estado?'<div>'+estado+'</div>':'')+'</div>'+
+      '<div class="row" style="flex-wrap:nowrap">'+btns+'</div></div>';
   }).join("") : '<p class="muted">No hay registros todavía.</p>';
 }
 $("#buscar").addEventListener("input", renderList);
 $("#lista").addEventListener("click", function(e){
-  var ed=e.target.dataset.ed, del=e.target.dataset.del;
-  if(ed){ fillForm(db.find(function(x){return x.id===ed})); show("form"); }
-  if(del && confirm("¿Borrar este registro? No se puede deshacer.")){
-    db = db.filter(function(x){return x.id!==del}); save(db); renderList(); updateHeader(); toast("Registro borrado");
-  }
+  var ed=e.target.dataset.ed, del=e.target.dataset.del, ver=e.target.dataset.ver;
+  if(ed){ show("form"); fillForm(db.find(function(x){return x.id===ed})); }
+  if(ver){ verRegistro(db.find(function(x){return x.id===ver})); }
+  if(del && confirm("¿Borrar este registro? No se puede deshacer.")) borrarRegistro(del);
 });
+function borrarRegistro(id){
+  var r = db.find(function(x){return x.id===id});
+  function quitar(){ db = db.filter(function(x){return x.id!==id}); save(db); renderList(); updateHeader(); toast("Registro borrado"); }
+  if(!r || !r._enNube){ quitar(); return; }
+  if(!navigator.onLine){ toast("Necesitas internet para borrar"); return; }
+  sb.from("viviendas").delete().eq("id", id).then(function(res){
+    if(res.error) toast("No se pudo borrar: "+res.error.message); else quitar();
+  });
+}
+var soloLectura = false;
+function verRegistro(r){
+  ["form","list","stats","data","admin"].forEach(function(t){ $("#tab-"+t).classList.toggle("hide", t!=="form"); });
+  fillForm(r); soloLectura = true; $("#fs").disabled = true;
+  $("#avisoLectura").classList.remove("hide"); $("#avisoCerrado").classList.add("hide");
+  $$("#btnGuardar, #btnLimpiar, #addMiembro, .mdel").forEach(function(b){ b.classList.add("hide"); });
+  window.scrollTo(0,0);
+}
+function salirLectura(){
+  soloLectura = false; $("#avisoLectura").classList.add("hide");
+  $$("#btnGuardar, #btnLimpiar, #addMiembro").forEach(function(b){ b.classList.remove("hide"); });
+  resetForm();
+}
+$("#salirLectura").addEventListener("click", function(e){ e.preventDefault(); salirLectura(); show("list"); });
 
 /* ---------- resumen ---------- */
 function personas(sector){
@@ -709,7 +839,7 @@ function renderGrafica(){
   }
   svgNode.addEventListener("mousemove", mostrar); svgNode.addEventListener("click", mostrar);
   svgNode.addEventListener("mouseleave", function(){ tip.classList.remove("show"); });
-  // tablas
+  // tabla
   var cols = d.series;
   var t = '<table class="tbl"><thead><tr><th>'+esc(d.A.t)+'</th>'+(d.B?cols.map(function(b){return '<th>'+esc(b)+'</th>'}).join(""):"")+'<th>Total</th><th>%</th></tr></thead><tbody>';
   d.cats.forEach(function(a){
@@ -758,18 +888,10 @@ var COLS_V = ["id","sector","vivienda","direccion","tipoVivienda","tenencia","al
   "luzFrecuencia","luzRegresa","luzRegresaUnidad","luzMaxSin","luzMaxSinUnidad","encuestador","fecha","notas"];
 var COLS_M = ["nombre","parentesco","sexo","nacimiento","edad","cedula","telefono","estadoCivil","nacionalidad","alfabetizado","estudia","nivel","trabaja","ocupacion","tieneHijos","hijos","religion","seguro","salud"];
 function csvCell(v){ v = Array.isArray(v) ? v.join("; ") : (v==null?"":String(v)); return /[",;\n\r]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
-$("#expCsv").addEventListener("click", function(){
-  if(!db.length){ toast("No hay datos"); return; }
-  var head = COLS_V.map(function(c){return c==="id"?"id_vivienda":c}).concat(["no_persona"], COLS_M);
-  var rows=[head.join(",")];
-  db.forEach(function(r){ (r.miembros||[]).forEach(function(m,i){
-    rows.push(COLS_V.map(function(c){return csvCell(r[c])}).concat([i+1], COLS_M.map(function(c){return csvCell(m[c])})).join(","));
-  }); });
-  descargar("censo_"+hoy()+".csv", "﻿"+rows.join("\r\n"), "text/csv;charset=utf-8");
-});
+$("#expXlsx").addEventListener("click", exportarExcel);
 $("#expJson").addEventListener("click", function(){
   if(!db.length){ toast("No hay datos"); return; }
-  descargar("censo_respaldo_"+hoy()+".json", JSON.stringify({app:"censo-comunitario",version:1,exportado:new Date().toISOString(),registros:db},null,1), "application/json");
+  descargar("censo_respaldo_"+hoy()+".json", JSON.stringify({app:"censo-comunitario",version:2,exportado:new Date().toISOString(),registros:db.map(limpio)},null,1), "application/json");
 });
 $("#impFile").addEventListener("change", function(e){
   var file=e.target.files[0]; if(!file) return;
@@ -778,24 +900,14 @@ $("#impFile").addEventListener("change", function(e){
     try{
       var data=JSON.parse(rd.result), regs = Array.isArray(data) ? data : data.registros;
       if(!Array.isArray(regs)) throw new Error("formato no reconocido");
-      var nuevos=0, act=0;
-      regs.forEach(function(r){
-        if(!r || !r.id) return;
-        var i=db.findIndex(function(x){return x.id===r.id});
-        if(i<0){ db.push(r); nuevos++; }
-        else if((r.actualizado||"")>(db[i].actualizado||"")){ db[i]=r; act++; }
-      });
-      save(db); updateSectores(); updateHeader();
-      toast(nuevos+" nuevos, "+act+" actualizados");
+      var n = agregarPendientes(regs);
+      toast(n+" registros listos para subir"); sincronizar();
     }catch(err){ toast("Archivo no válido: "+err.message); }
     e.target.value="";
   };
   rd.readAsText(file);
 });
-$("#borrarTodo").addEventListener("click", function(){
-  if(!db.length){ toast("No hay datos"); return; }
-  if(prompt("Escribe BORRAR para eliminar los "+db.length+" registros")==="BORRAR"){ db=[]; save(db); updateHeader(); toast("Todo borrado"); }
-});
+
 
 /* ---------- utilidades ---------- */
 function updateSectores(){
@@ -804,7 +916,362 @@ function updateSectores(){
 }
 function updateHeader(){
   var p = db.reduce(function(s,r){return s+(r.miembros||[]).length},0);
-  $("#hdrInfo").textContent = db.length+" viviendas · "+p+" personas · funciona sin internet";
+  $("#hdrInfo").textContent = db.length+" viviendas · "+p+" personas";
+  var pend = db.filter(function(r){return r._pend && !r._err}).length, err = db.filter(function(r){return r._err}).length;
+  var el = $("#hdrSync");
+  if(err){ el.className="pill err"; el.textContent = err+" sin subir"; }
+  else if(pend){ el.className="pill pend"; el.textContent = pend+" pendiente(s)"+(navigator.onLine?"":" · sin señal"); }
+  else { el.className="pill ok"; el.textContent = ultimaSync ? "Sincronizado "+ultimaSync.toLocaleTimeString("es-DO",{hour:"numeric",minute:"2-digit"}) : (navigator.onLine?"Conectando…":"Sin señal"); }
+}
+
+/* ======================= NUBE ======================= */
+var sb = window.supabase ? window.supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession:true, autoRefreshToken:true, storageKey:"censo.auth" } }) : null;
+var sesionId = null, perfil = null, censoAbierto = true, ultimaSync = null, sincronizando = false;
+try { perfil = JSON.parse(localStorage.getItem("censo.perfil")||"null"); censoAbierto = localStorage.getItem("censo.abierto")!=="0"; } catch(e){}
+
+function limpio(r){ var o={}; for(var k in r){ if(k.charAt(0)!=="_") o[k]=r[k]; } return o; }
+function puedeEscribir(){ return !!perfil && perfil.rol!=="manager" && censoAbierto; }
+function aplicarBloqueo(){
+  var cerrado = !censoAbierto;
+  $("#avisoCerrado").classList.toggle("hide", !cerrado || soloLectura);
+  if(!soloLectura) $("#fs").disabled = !puedeEscribir();
+}
+function agregarPendientes(regs){
+  var n=0;
+  regs.forEach(function(r){
+    if(!r || !r.id) return;
+    r = limpio(r); r._pend = true; r._censador = r._censador || (perfil && perfil.nombre); r._censadorId = sesionId;
+    var i=db.findIndex(function(x){return x.id===r.id});
+    if(i<0) db.push(r); else { r._enNube = db[i]._enNube; db[i]=r; }
+    n++;
+  });
+  save(db); updateSectores(); updateHeader();
+  return n;
+}
+
+// Subir pendientes y bajar lo que hay en la nube
+function sincronizar(){
+  if(!sb || !sesionId || sincronizando || !navigator.onLine){ updateHeader(); return Promise.resolve(); }
+  sincronizando = true; $("#hdrSync").textContent = "Sincronizando…";
+  return leerPerfilYConfig().then(function(ok){
+    if(!ok) return;
+    var pend = db.filter(function(r){ return r._pend; });
+    return pend.reduce(function(prom, r){
+      return prom.then(function(){
+        return sb.from("viviendas").upsert({ id:r.id, datos:limpio(r) }).then(function(res){
+          if(res.error){ r._err = !censoAbierto ? "el censo está cerrado" : (res.error.code==="42501" ? "sin permiso" : res.error.message); }
+          else { delete r._pend; delete r._err; r._enNube = true; }
+        });
+      });
+    }, Promise.resolve()).then(function(){ save(db); return bajarTodo(); });
+  }).then(function(){ ultimaSync = new Date(); })
+    .catch(function(e){ console.log("sync", e); })
+    .then(function(){ sincronizando=false; updateSectores(); updateHeader(); refrescarVista(); });
+}
+function leerPerfilYConfig(){
+  return sb.from("perfiles").select("usuario,nombre,rol,activo").eq("id", sesionId).maybeSingle().then(function(res){
+    if(res.error) throw res.error;
+    if(!res.data || !res.data.activo){ cerrarSesion("Tu usuario fue desactivado. Habla con el administrador."); return false; }
+    var cambioRol = !perfil || perfil.rol!==res.data.rol;
+    perfil = res.data; localStorage.setItem("censo.perfil", JSON.stringify(perfil));
+    pintarUsuario(); if(cambioRol) show(TABS[perfil.rol][0]);
+    return sb.from("config").select("censo_abierto,cerrado_en").eq("id",1).maybeSingle().then(function(c){
+      if(c.data){ censoAbierto = !!c.data.censo_abierto; localStorage.setItem("censo.abierto", censoAbierto?"1":"0"); window._cerradoEn = c.data.cerrado_en; }
+      aplicarBloqueo(); return true;
+    });
+  });
+}
+function bajarTodo(){
+  var filas = [], paso = 1000;
+  function pagina(desde){
+    return sb.from("viviendas").select("id,datos,actualizado,censador_id,perfiles(nombre)").order("creado").range(desde, desde+paso-1).then(function(res){
+      if(res.error) throw res.error;
+      filas = filas.concat(res.data);
+      if(res.data.length===paso) return pagina(desde+paso);
+    });
+  }
+  return pagina(0).then(function(){
+    var pendientes = {}; db.forEach(function(r){ if(r._pend) pendientes[r.id]=r; });
+    var nuevo = filas.map(function(f){
+      if(pendientes[f.id]){ var p = pendientes[f.id]; p._enNube = true; delete pendientes[f.id]; return p; }
+      var r = f.datos || {}; r.id = f.id; r._enNube = true; r._censadorId = f.censador_id;
+      r._censador = f.perfiles ? f.perfiles.nombre : ""; r.actualizado = f.actualizado;
+      return r;
+    });
+    Object.keys(pendientes).forEach(function(k){ nuevo.push(pendientes[k]); });
+    db = nuevo; save(db);
+  });
+}
+function refrescarVista(){
+  if(!$("#tab-list").classList.contains("hide")) renderList();
+  if(!$("#tab-stats").classList.contains("hide")) renderStats();
+  if(!$("#tab-data").classList.contains("hide")) renderDatos();
+  if(!$("#tab-admin").classList.contains("hide")) pintarEstadoCenso();
+}
+$("#btnSync").addEventListener("click", function(){ if(!navigator.onLine) toast("No hay señal"); sincronizar(); });
+$("#btnSync2").addEventListener("click", function(){ if(!navigator.onLine) toast("No hay señal"); sincronizar(); });
+window.addEventListener("online", sincronizar);
+window.addEventListener("offline", updateHeader);
+setInterval(sincronizar, 60000);
+
+/* ---------- sesión ---------- */
+function pintarUsuario(){
+  $("#hdrUser").textContent = perfil ? perfil.nombre+" ("+perfil.rol+")" : "";
+  $$("[data-rol]").forEach(function(el){ el.classList.toggle("hide", !perfil || el.dataset.rol.split(" ").indexOf(perfil.rol)<0); });
+}
+function entrar(user){
+  sesionId = user.id;
+  $("#login").classList.add("hide");
+  // si el teléfono tenía registros de otro usuario, no se mezclan
+  if(localStorage.getItem("censo.ultimoUsuario") !== user.id){
+    if(!db.some(function(r){return r._pend})) { db = []; save(db); }
+    localStorage.setItem("censo.ultimoUsuario", user.id);
+  }
+  pintarUsuario(); resetForm(); updateHeader();
+  show(perfil ? TABS[perfil.rol][0] : "form");
+  sincronizar();
+}
+function cerrarSesion(msg){
+  var pend = db.filter(function(r){return r._pend}).length;
+  sb.auth.signOut().catch(function(){});
+  sesionId = null; perfil = null; localStorage.removeItem("censo.perfil");
+  if(!pend){ db=[]; save(db); }
+  mostrarLogin(msg||"");
+}
+$("#btnSalir").addEventListener("click", function(){
+  var pend = db.filter(function(r){return r._pend}).length;
+  if(pend && !confirm("Hay "+pend+" registro(s) sin subir. Se quedan guardados en este teléfono y suben cuando vuelvas a entrar. ¿Salir?")) return;
+  if(!pend && !confirm("¿Cerrar sesión?")) return;
+  cerrarSesion();
+});
+function mostrarLogin(msg){
+  $("#login").classList.remove("hide"); $("#loginErr").textContent = msg||"";
+  $("#loginCard").classList.remove("hide"); $("#inicialCard").classList.add("hide");
+  if(navigator.onLine && sb){
+    sb.functions.invoke("usuarios", { body:{ accion:"hay_admin" } }).then(function(r){
+      if(r.data && r.data.hay_admin===false){ $("#loginCard").classList.add("hide"); $("#inicialCard").classList.remove("hide"); }
+    }).catch(function(){});
+  } else { $("#loginErr").textContent = msg || "Necesitas internet para entrar la primera vez."; }
+}
+$("#fLogin").addEventListener("submit", function(e){
+  e.preventDefault();
+  var u = this.usuario.value.trim().toLowerCase(), c = this.clave.value;
+  if(!navigator.onLine){ $("#loginErr").textContent = "Necesitas internet para entrar."; return; }
+  $("#loginErr").textContent = "Entrando…";
+  sb.auth.signInWithPassword({ email: u+"@"+DOMINIO, password: c }).then(function(res){
+    if(res.error){ $("#loginErr").textContent = /invalid/i.test(res.error.message) ? "Usuario o clave incorrectos" : /banned/i.test(res.error.message) ? "Este usuario está desactivado" : res.error.message; return; }
+    sesionId = res.data.user.id; perfil = null;
+    return leerPerfilYConfig().then(function(ok){ if(ok){ $("#fLogin").reset(); $("#loginErr").textContent=""; entrar(res.data.user); } });
+  }).catch(function(err){ $("#loginErr").textContent = "No se pudo conectar: "+err.message; });
+});
+$("#fInicial").addEventListener("submit", function(e){
+  e.preventDefault(); var fm = this;
+  var datos = { accion:"inicial", nombre: fm.nombre.value.trim(), usuario: fm.usuario.value.trim().toLowerCase(), clave: fm.clave.value };
+  $("#inicialErr").textContent = "Creando…";
+  sb.functions.invoke("usuarios", { body: datos }).then(function(r){
+    var err = (r.data && r.data.error) || (r.error && "No se pudo crear");
+    if(err){ return leerError(r).then(function(m){ $("#inicialErr").textContent = m || err; }); }
+    var lf = $("#fLogin"); lf.usuario.value = datos.usuario; lf.clave.value = datos.clave;
+    $("#inicialCard").classList.add("hide"); $("#loginCard").classList.remove("hide");
+    lf.requestSubmit ? lf.requestSubmit() : lf.dispatchEvent(new Event("submit"));
+  });
+});
+function leerError(r){
+  if(r.data && r.data.error) return Promise.resolve(r.data.error);
+  if(r.error && r.error.context && r.error.context.json) return r.error.context.json().then(function(j){ return j.error; }).catch(function(){ return r.error.message; });
+  return Promise.resolve(r.error ? r.error.message : "");
+}
+
+/* ---------- pestaña Datos ---------- */
+function renderDatos(){
+  var pend = db.filter(function(r){return r._pend && !r._err}).length, err = db.filter(function(r){return r._err}).length;
+  $("#syncDetalle").textContent = (navigator.onLine ? "Con señal. " : "Sin señal: los registros se guardan en el teléfono y suben solos al volver la señal. ") +
+    (pend ? pend+" registro(s) pendiente(s) de subir. " : "Todo subido. ") + (err ? err+" no se pudieron subir (ver Registros). " : "") +
+    (ultimaSync ? "Última sincronización: "+ultimaSync.toLocaleTimeString("es-DO",{hour:"numeric",minute:"2-digit"})+"." : "");
+  var viejos = []; try { viejos = JSON.parse(localStorage.getItem(KEY_VIEJO)||"[]"); } catch(e){}
+  var mostrar = viejos.length && puedeEscribir();
+  $("#migrarCard").classList.toggle("hide", !mostrar);
+  if(mostrar) $("#migrarTxt").textContent = "Este teléfono tiene "+viejos.length+" vivienda(s) registradas antes de usar la nube. Puedes subirlas para que queden en el censo.";
+}
+$("#btnMigrar").addEventListener("click", function(){
+  var viejos = []; try { viejos = JSON.parse(localStorage.getItem(KEY_VIEJO)||"[]"); } catch(e){}
+  if(!viejos.length) return;
+  agregarPendientes(viejos);
+  localStorage.setItem(KEY_VIEJO+".subido", localStorage.getItem(KEY_VIEJO)); localStorage.removeItem(KEY_VIEJO);
+  toast(viejos.length+" registros listos para subir"); renderDatos(); sincronizar();
+});
+
+/* ---------- pestaña Admin ---------- */
+function pintarEstadoCenso(){
+  $("#estadoCenso").textContent = censoAbierto ? "🟢 Abierto: se pueden registrar datos" : "🔴 Cerrado: no se aceptan datos nuevos";
+  $("#estadoCensoDet").textContent = !censoAbierto && window._cerradoEn ? "Cerrado el "+new Date(window._cerradoEn).toLocaleString("es-DO") : "";
+  var b = $("#btnCenso"); b.textContent = censoAbierto ? "Cerrar ingreso de datos" : "Volver a abrir";
+  b.className = censoAbierto ? "btn danger" : "btn";
+}
+$("#btnCenso").addEventListener("click", function(){
+  if(!navigator.onLine){ toast("Necesitas internet"); return; }
+  var abrir = !censoAbierto;
+  if(!confirm(abrir ? "¿Volver a abrir el ingreso de datos?" : "¿Cerrar el ingreso de datos? Nadie podrá agregar ni cambiar registros, ni siquiera los que estén pendientes en teléfonos sin señal.")) return;
+  sb.from("config").update({ censo_abierto: abrir }).eq("id",1).select().then(function(res){
+    if(res.error || !res.data || !res.data.length){ toast("No se pudo cambiar: "+(res.error?res.error.message:"sin permiso")); return; }
+    censoAbierto = abrir; window._cerradoEn = res.data[0].cerrado_en; localStorage.setItem("censo.abierto", abrir?"1":"0");
+    pintarEstadoCenso(); aplicarBloqueo(); toast(abrir ? "Censo abierto" : "Censo cerrado");
+  });
+});
+function renderAdmin(){
+  pintarEstadoCenso();
+  if(!navigator.onLine){ $("#listaUsuarios").innerHTML = '<p class="muted">Necesitas internet para ver los usuarios.</p>'; return; }
+  sb.from("perfiles").select("id,usuario,nombre,rol,activo,creado").order("creado").then(function(res){
+    if(res.error){ $("#listaUsuarios").innerHTML = '<p class="muted">'+esc(res.error.message)+'</p>'; return; }
+    var cuenta = {}; db.forEach(function(r){ if(r._censadorId) cuenta[r._censadorId]=(cuenta[r._censadorId]||0)+1; });
+    $("#listaUsuarios").innerHTML = res.data.map(function(u){
+      var yo = u.id===sesionId;
+      return '<div class="uitem"><div><b>'+esc(u.nombre)+'</b> '+(u.activo?'':'<span class="pill err">desactivado</span>')+
+        '<div class="muted">usuario: '+esc(u.usuario)+' · '+(cuenta[u.id]||0)+' vivienda(s)</div></div>'+
+        '<div class="acc"><select data-rolu="'+u.id+'"'+(yo?' disabled':'')+'>'+["censador","manager","admin"].map(function(r){return '<option'+(r===u.rol?' selected':'')+'>'+r+'</option>'}).join("")+'</select>'+
+        '<button class="btn sec sm" data-clave="'+u.id+'" data-nom="'+esc(u.nombre)+'">Clave</button>'+
+        (yo?'':'<button class="btn sm '+(u.activo?'danger':'')+'" data-act="'+u.id+'" data-v="'+(u.activo?0:1)+'">'+(u.activo?'Desactivar':'Activar')+'</button>')+'</div></div>';
+    }).join("");
+  });
+}
+function llamarUsuarios(datos, ok){
+  return sb.functions.invoke("usuarios", { body: datos }).then(function(r){
+    return leerError(r).then(function(m){ if(m){ toast(m); return false; } if(ok) toast(ok); renderAdmin(); return true; });
+  });
+}
+$("#listaUsuarios").addEventListener("click", function(e){
+  var t = e.target;
+  if(t.dataset.clave){ var c = prompt("Nueva clave para "+t.dataset.nom+" (mínimo 6 caracteres):"); if(c) llamarUsuarios({accion:"clave", id:t.dataset.clave, clave:c}, "Clave cambiada"); }
+  if(t.dataset.act){ var on = t.dataset.v==="1"; if(confirm(on?"¿Activar este usuario?":"¿Desactivar este usuario? Ya no podrá entrar.")) llamarUsuarios({accion:"estado", id:t.dataset.act, activo:on}, on?"Usuario activado":"Usuario desactivado"); }
+});
+$("#listaUsuarios").addEventListener("change", function(e){
+  var id = e.target.dataset.rolu; if(id) llamarUsuarios({accion:"rol", id:id, rol:e.target.value}, "Rol cambiado");
+});
+$("#fUsuario").addEventListener("submit", function(e){
+  e.preventDefault(); var fm=this;
+  $("#uErr").textContent = "";
+  llamarUsuarios({accion:"crear", nombre:fm.nombre.value.trim(), usuario:fm.usuario.value.trim().toLowerCase(), clave:fm.clave.value, rol:fm.rol.value}, "Usuario creado")
+    .then(function(ok){ if(ok){ $("#uErr").textContent=""; toast("Usuario creado: "+fm.usuario.value.trim().toLowerCase()); fm.reset(); syncSeg(fm); } });
+});
+
+/* ---------- Excel (.xlsx) ---------- */
+function cargarExcelJS(){
+  if(window.ExcelJS) return Promise.resolve();
+  return new Promise(function(ok, mal){ var sc=document.createElement("script"); sc.src="lib/exceljs.min.js"; sc.onload=ok; sc.onerror=function(){ mal(new Error("no se pudo cargar")); }; document.head.appendChild(sc); });
+}
+function dur(n,u){ return (n===""||n==null) ? "" : n+" "+String(u||"").toLowerCase(); }
+function exportarExcel(){
+  var sector = $("#filtroSector").value;
+  var V = db.filter(function(r){ return !sector || r.sector===sector; });
+  if(!V.length){ toast("No hay datos"); return; }
+  toast("Preparando Excel…");
+  cargarExcelJS().then(function(){
+    var wb = new ExcelJS.Workbook(); wb.creator = "Censo Comunitario"; wb.created = new Date();
+    var ws = wb.addWorksheet("Resumen", {properties:{tabColor:{argb:"FF0F7A5C"}}, views:[{showGridLines:false}]});
+    var VERDE="FF0F7A5C", VERDE_CLARO="FFE2F2EC", GRIS="FFF3F6FA", BORDE={style:"thin",color:{argb:"FFD9E0E8"}};
+    function encabezado(row){ row.eachCell(function(c){ c.font={bold:true,color:{argb:"FFFFFFFF"}}; c.fill={type:"pattern",pattern:"solid",fgColor:{argb:VERDE}}; c.alignment={vertical:"middle",wrapText:true}; c.border={top:BORDE,bottom:BORDE,left:BORDE,right:BORDE}; }); row.height=32; }
+    function tablaDatos(ws, cols, filas){
+      ws.columns = cols.map(function(c){ return { header:c[0], key:c[1], width:c[2] }; });
+      encabezado(ws.getRow(1));
+      filas.forEach(function(f,i){ var row = ws.addRow(f); row.eachCell({includeEmpty:true}, function(c){ c.border={bottom:BORDE}; c.alignment={vertical:"top",wrapText:true}; if(i%2) c.fill={type:"pattern",pattern:"solid",fgColor:{argb:GRIS}}; }); });
+      ws.views = [{ state:"frozen", ySplit:1, xSplit:cols[0][3]||0 }];
+      ws.autoFilter = { from:{row:1,column:1}, to:{row:1,column:cols.length} };
+    }
+
+    /* --- Hoja Viviendas --- */
+    var wsV = wb.addWorksheet("Viviendas", {properties:{tabColor:{argb:"FF2A78D6"}}});
+    var colsV = [["No.","n",6,1],["Sector / barrio","sector",18],["No. vivienda","viv",10],["Dirección","dir",28],["Tipo de vivienda","tipo",16],["Tenencia","ten",12],["Alquiler mensual (RD$)","alq",14],
+      ["¿Vive solo(a)?","solo",10],["Personas en la casa","pc",11],["Personas registradas","pr",12],["Agua potable","agua",10],["¿Cada qué tiempo llega el agua?","aguaF",24],["Cisterna","cis",10],["Pozo","pozo",8],["Mayor tiempo sin agua","aguaMax",14],
+      ["Electricidad","luz",11],["¿Cada cuánto se va la luz?","luzF",22],["Tarda en regresar (prom.)","luzReg",14],["Mayor tiempo sin luz","luzMax",14],["Baño interior","bano",10],["Internet","int",9],["Recogida de basura","bas",11],
+      ["Censador(a)","cen",18],["Fecha","fecha",12],["Notas","notas",30]];
+    tablaDatos(wsV, colsV, V.map(function(r,i){
+      var ag = tieneServ(r,"Agua potable"), lz = tieneServ(r,"Electricidad");
+      return { n:i+1, sector:r.sector, viv:r.vivienda, dir:r.direccion, tipo:r.tipoVivienda, ten:r.tenencia, alq: +r.alquiler>0 ? +r.alquiler : null,
+        solo:r.viveSolo, pc: r.viveSolo==="Sí" ? 1 : (+r.personasHogar||null), pr:(r.miembros||[]).length, agua:ag,
+        aguaF: ag==="Sí" ? (r.aguaSiempre==="Sí" ? "Siempre hay agua" : r.aguaFrecuencia) : "", cis:r.aguaCisterna, pozo:r.aguaPozo, aguaMax:dur(r.aguaMaxSin,r.aguaMaxSinUnidad),
+        luz:lz, luzF:r.luzFrecuencia, luzReg:dur(r.luzRegresa,r.luzRegresaUnidad), luzMax:dur(r.luzMaxSin,r.luzMaxSinUnidad),
+        bano:tieneServ(r,"Baño interior"), int:tieneServ(r,"Internet"), bas:tieneServ(r,"Recogida de basura"),
+        cen: r._censador || r.encuestador, fecha: r.fecha ? new Date(r.fecha+"T12:00:00") : null, notas:r.notas };
+    }));
+    wsV.getColumn("alq").numFmt = '"RD$" #,##0'; wsV.getColumn("fecha").numFmt = "dd/mm/yyyy";
+
+    /* --- Hoja Personas --- */
+    var wsP = wb.addWorksheet("Personas", {properties:{tabColor:{argb:"FFEB6834"}}});
+    var colsP = [["No.","n",6,2],["Nombre completo","nombre",26],["Sector / barrio","sector",18],["No. vivienda","viv",10],["Parentesco","par",16],["Sexo","sexo",11],["Edad","edad",7],["Grupo de edad","gedad",10],
+      ["Fecha de nacimiento","nac",12],["Cédula","ced",15],["Teléfono","tel",13],["Estado civil","ec",15],["Nacionalidad","nac2",12],["¿Sabe leer y escribir?","alf",11],["¿Estudia?","est",9],
+      ["Nivel educativo","niv",22],["Trabajo","trab",20],["Ocupación","ocu",18],["¿Tiene hijos?","th",9],["Cantidad de hijos","hij",9],["Religión","rel",18],["Seguro médico","seg",16],["Discapacidad / salud","sal",22],["Censador(a)","cen",18]];
+    var filasP = [], np = 0;
+    V.forEach(function(r){ (r.miembros||[]).forEach(function(m){ np++;
+      filasP.push({ n:np, nombre:m.nombre, sector:r.sector, viv:r.vivienda, par:m.parentesco, sexo:m.sexo, edad: m.edad===""||m.edad==null ? null : +m.edad, gedad:grupoEdad(m.edad),
+        nac: m.nacimiento ? new Date(m.nacimiento+"T12:00:00") : null, ced:m.cedula, tel:m.telefono, ec:m.estadoCivil, nac2:m.nacionalidad, alf:m.alfabetizado, est:m.estudia,
+        niv:m.nivel, trab:m.trabaja, ocu:m.ocupacion, th: m.tieneHijos || (+m.hijos>0?"Sí":""), hij: m.hijos===""||m.hijos==null ? null : +m.hijos, rel:m.religion, seg:m.seguro, sal:m.salud,
+        cen: r._censador || r.encuestador });
+    }); });
+    tablaDatos(wsP, colsP, filasP);
+    wsP.getColumn("nac").numFmt = "dd/mm/yyyy";
+
+    /* --- Hoja Resumen (primera) --- */
+    ws.columns = [{width:34},{width:14},{width:12},{width:3},{width:34},{width:14},{width:12}];
+    var P = []; V.forEach(function(r){ (r.miembros||[]).forEach(function(m){ P.push(m); }); });
+    var t = ws.getCell("A1"); t.value = "Censo Comunitario — Resumen"; t.font = {bold:true,size:18,color:{argb:VERDE}};
+    ws.getCell("A2").value = (sector ? "Sector: "+sector : "Todos los sectores") + " · Generado el " + new Date().toLocaleString("es-DO") + " · Ingreso de datos: " + (censoAbierto?"abierto":"cerrado");
+    ws.getCell("A2").font = {color:{argb:"FF56616D"}};
+    var edades = P.map(function(m){return m.edad}).filter(function(e){return e!==""&&e!=null&&!isNaN(e)});
+    var kpis = [["Viviendas", V.length],["Personas", P.length],["Promedio de personas por vivienda", V.length ? +(P.length/V.length).toFixed(1) : 0],
+      ["Edad promedio", edades.length ? +(edades.reduce(function(a,b){return a+ +b},0)/edades.length).toFixed(1) : null],
+      ["Menores de 18 años", edades.filter(function(e){return e<18}).length],["Personas que estudian", P.filter(function(m){return m.estudia==="Sí"}).length],
+      ["No saben leer ni escribir", P.filter(function(m){return m.alfabetizado==="No"}).length],["Personas con hijos", P.filter(function(m){return m.tieneHijos==="Sí"||+m.hijos>0}).length]];
+    var fila = 4;
+    function titulo(col, f, txt){ var c = ws.getCell(f, col); c.value = txt; c.font = {bold:true,size:13,color:{argb:VERDE}}; }
+    function tabla(col, f, cab, filas, pct){
+      var r0 = ws.getRow(f);
+      cab.forEach(function(h,i){ var c = r0.getCell(col+i); c.value=h; c.font={bold:true,color:{argb:"FFFFFFFF"}}; c.fill={type:"pattern",pattern:"solid",fgColor:{argb:VERDE}}; c.border={bottom:BORDE}; if(i) c.alignment={horizontal:"right"}; });
+      filas.forEach(function(v,j){ var r = ws.getRow(f+1+j);
+        v.forEach(function(x,i){ var c = r.getCell(col+i); c.value = x; c.border={bottom:BORDE}; if(j%2) c.fill={type:"pattern",pattern:"solid",fgColor:{argb:GRIS}}; if(i===2 && pct) c.numFmt="0.0%"; });
+      });
+      var rt = ws.getRow(f+1+filas.length);
+      if(pct){ rt.getCell(col).value="Total"; rt.getCell(col+1).value = filas.reduce(function(s,v){return s+(v[1]||0)},0); rt.getCell(col+2).value = filas.length?1:0; rt.getCell(col+2).numFmt="0.0%";
+        [0,1,2].forEach(function(i){ var c=rt.getCell(col+i); c.font={bold:true}; c.fill={type:"pattern",pattern:"solid",fgColor:{argb:VERDE_CLARO}}; }); }
+      return f + filas.length + (pct?2:1);
+    }
+    function distrib(lista, fn, orden){
+      var c = contar(lista, fn), tot = lista.length || 1;
+      var claves = ordenar(Object.keys(c), c, orden);
+      return claves.map(function(k){ return [k, c[k], c[k]/tot]; });
+    }
+    titulo(1, fila, "Totales"); var finA = tabla(1, fila+1, ["Indicador","Cantidad"], kpis, false);
+    // tabla por sector a la derecha
+    var porSec = {}; V.forEach(function(r){ var k=r.sector||"Sin dato"; porSec[k]=porSec[k]||[0,0]; porSec[k][0]++; porSec[k][1]+=(r.miembros||[]).length; });
+    titulo(5, fila, "Por sector");
+    var finB = tabla(5, fila+1, ["Sector","Viviendas","Personas"], Object.keys(porSec).sort().map(function(k){ return [k, porSec[k][0], porSec[k][1]]; }), false);
+    fila = Math.max(finA, finB) + 2;
+    var bloques = [
+      ["Sexo", P, function(m){return m.sexo}], ["Grupos de edad", P, function(m){return grupoEdad(m.edad)}, ORD_EDAD],
+      ["Nivel educativo", P, function(m){return m.nivel}, ORD_NIVEL], ["¿Estudia actualmente?", P, function(m){return m.estudia}, ["Sí","No"]],
+      ["Religión", P, function(m){return m.religion}], ["Trabajo", P, function(m){return m.trabaja}],
+      ["Seguro médico", P, function(m){return m.seguro}], ["¿Sabe leer y escribir?", P, function(m){return m.alfabetizado}, ["Sí","No"]],
+      ["Tenencia de la vivienda", V, function(r){return r.tenencia}], ["Tipo de vivienda", V, function(r){return r.tipoVivienda}],
+      ["Agua: ¿cada qué tiempo llega?", V.filter(function(r){return tieneServ(r,"Agua potable")==="Sí"}), function(r){return r.aguaSiempre==="Sí"?"Siempre hay agua":r.aguaFrecuencia}, varPor("aguaFrec").o],
+      ["Luz: ¿cada cuánto se va?", V.filter(function(r){return tieneServ(r,"Electricidad")==="Sí"}), function(r){return r.luzFrecuencia}, varPor("luzFrec").o],
+      ["Viviendas con cisterna", V.filter(function(r){return r.aguaCisterna}), function(r){return r.aguaCisterna}, ["Sí","No"]],
+      ["Viviendas con pozo", V.filter(function(r){return r.aguaPozo}), function(r){return r.aguaPozo}, ["Sí","No"]]
+    ];
+    for(var b=0; b<bloques.length; b+=2){
+      var fins = [fila];
+      [0,1].forEach(function(k){ var bl = bloques[b+k]; if(!bl) return; var col = k ? 5 : 1;
+        titulo(col, fila, bl[0] + (bl[1]===P ? " (personas)" : " (viviendas)"));
+        fins.push(tabla(col, fila+1, ["Respuesta","Cantidad","%"], distrib(bl[1], bl[2], bl[3]), true)); });
+      fila = Math.max.apply(null, fins) + 2;
+    }
+    var alq = V.map(function(r){return +r.alquiler}).filter(function(x){return x>0});
+    if(alq.length){ titulo(1, fila, "Alquiler"); tabla(1, fila+1, ["Indicador","RD$"], [["Viviendas que informaron alquiler", alq.length],["Promedio mensual", Math.round(alq.reduce(function(s,x){return s+x},0)/alq.length)],["Mínimo", Math.min.apply(null,alq)],["Máximo", Math.max.apply(null,alq)]], false);
+      for(var q=fila+3;q<=fila+5;q++) ws.getRow(q).getCell(2).numFmt='"RD$" #,##0'; }
+
+    return wb.xlsx.writeBuffer();
+  }).then(function(buf){
+    if(!buf) return;
+    descargar("censo_"+(sector? sector.replace(/[^\w]+/g,"_")+"_" : "")+hoy()+".xlsx", buf, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  }).catch(function(e){ toast("No se pudo crear el Excel: "+e.message); });
 }
 
 /* ---------- versión y aviso de actualización ---------- */
@@ -828,7 +1295,14 @@ function revisarVersion(){
 
 segmentar(f);
 revisarVersion();
-resetForm(); updateSectores(); updateHeader(); initCreador();
+initCreador(); updateSectores();
+if(!sb){ mostrarLogin("No se pudo cargar la conexión a la nube."); }
+else sb.auth.getSession().then(function(res){
+  var ses = res.data && res.data.session;
+  if(ses && ses.user){ sesionId = ses.user.id; entrar(ses.user); }   // también sin señal, con el último perfil guardado
+  else mostrarLogin();
+}).catch(function(){ mostrarLogin(); });
+sb && sb.auth.onAuthStateChange(function(ev){ if(ev==="SIGNED_OUT" && sesionId){ sesionId=null; mostrarLogin("Tu sesión terminó. Vuelve a entrar."); } });
 if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
   navigator.serviceWorker.register("sw.js").catch(function(){});
 }
