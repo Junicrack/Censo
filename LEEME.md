@@ -66,3 +66,9 @@ Archivos del servidor en `supabase/`: `001_esquema.sql` (tablas y permisos) y
 
 Importante: si se borran los datos del navegador o se desinstala la app,
 se pierden los registros. Exportar el respaldo JSON con frecuencia.
+
+## Preguntas propias y exportación a medida
+
+- **Admin → Preguntas del formulario**: el administrador crea preguntas nuevas (selección única, casillas de varias opciones, sí/no, texto, número o fecha), a la vivienda o a cada persona, y puede marcarlas obligatorias, ordenarlas, ocultarlas o borrarlas. Los censadores las ven al sincronizar.
+- Las respuestas salen como columnas nuevas en el Excel completo, y las de selección única o sí/no también se pueden graficar en Resumen.
+- **Datos → Exportación a medida** (manager y admin): elige columnas y filtros (por ejemplo edad mayor o igual a 18) y descarga solo eso en Excel. El botón de ejemplo arma "nombre, edad, teléfono y cédula de mayores de edad".
