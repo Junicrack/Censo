@@ -709,7 +709,7 @@ function renderGrafica(){
   }
   svgNode.addEventListener("mousemove", mostrar); svgNode.addEventListener("click", mostrar);
   svgNode.addEventListener("mouseleave", function(){ tip.classList.remove("show"); });
-  // tabla
+  // tablas
   var cols = d.series;
   var t = '<table class="tbl"><thead><tr><th>'+esc(d.A.t)+'</th>'+(d.B?cols.map(function(b){return '<th>'+esc(b)+'</th>'}).join(""):"")+'<th>Total</th><th>%</th></tr></thead><tbody>';
   d.cats.forEach(function(a){
