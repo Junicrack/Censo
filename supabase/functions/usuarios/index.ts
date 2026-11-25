@@ -50,14 +50,14 @@ Deno.serve(async (req) => {
 
   // 1) Primer administrador (solo si todavía no hay ninguno)
   if (accion === "inicial") {
-    const { count } = await admin.from("perfiles").select("id", { count: "exact", head: true }).eq("rol", "admin");
+    const { count } = await admin.from("perfiles").select("id", { count: "exact", head: true }).eq("rol", "admin").is("eliminado", null);
     if ((count ?? 0) > 0) return resp({ error: "Ya existe un administrador" }, 403);
     const u = limpiarUsuario(body.usuario);
     if (!u) return resp({ error: "Usuario no válido (3 a 30 letras, números, punto o guion)" }, 400);
     return await crear(u, String(body.clave ?? ""), String(body.nombre ?? ""), "admin");
   }
   if (accion === "hay_admin") {
-    const { count } = await admin.from("perfiles").select("id", { count: "exact", head: true }).eq("rol", "admin");
+    const { count } = await admin.from("perfiles").select("id", { count: "exact", head: true }).eq("rol", "admin").is("eliminado", null);
     return resp({ hay_admin: (count ?? 0) > 0 });
   }
 
@@ -65,8 +65,8 @@ Deno.serve(async (req) => {
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   const { data: quien, error: eq } = await admin.auth.getUser(token);
   if (eq || !quien?.user) return resp({ error: "Sesión no válida" }, 401);
-  const { data: perfil } = await admin.from("perfiles").select("rol, activo").eq("id", quien.user.id).single();
-  if (!perfil || perfil.rol !== "admin" || !perfil.activo) return resp({ error: "Solo el administrador puede hacer esto" }, 403);
+  const { data: perfil } = await admin.from("perfiles").select("rol, activo, eliminado").eq("id", quien.user.id).single();
+  if (!perfil || perfil.rol !== "admin" || !perfil.activo || perfil.eliminado) return resp({ error: "Solo el administrador puede hacer esto" }, 403);
 
   if (accion === "crear") {
     const u = limpiarUsuario(body.usuario);
@@ -99,6 +99,24 @@ Deno.serve(async (req) => {
     if (id === quien.user.id && rol !== "admin") return resp({ error: "No puedes quitarte el rol de admin" }, 400);
     const { error } = await admin.from("perfiles").update({ rol }).eq("id", id);
     return error ? resp({ error: error.message }, 400) : resp({ ok: true });
+  }
+
+  if (accion === "eliminar") {
+    // Borra la cuenta de acceso, pero deja el perfil (marcado como eliminado)
+    // para que sus registros sigan mostrando quién los hizo.
+    if (id === quien.user.id) return resp({ error: "No puedes eliminarte a ti mismo" }, 400);
+    const { data: p, error: ep } = await admin.from("perfiles").select("eliminado").eq("id", id).maybeSingle();
+    if (ep) return resp({ error: ep.message }, 400);
+    if (!p) return resp({ error: "Ese usuario no existe" }, 404);
+    if (p.eliminado) return resp({ error: "Ese usuario ya fue eliminado" }, 400);
+    const { error: e1 } = await admin.from("perfiles").update({ activo: false, eliminado: new Date().toISOString() }).eq("id", id);
+    if (e1) return resp({ error: e1.message }, 400);
+    const { error: e2 } = await admin.auth.admin.deleteUser(id);
+    if (e2 && !/not found/i.test(e2.message)) {
+      await admin.from("perfiles").update({ eliminado: null }).eq("id", id);
+      return resp({ error: e2.message }, 400);
+    }
+    return resp({ ok: true });
   }
 
   return resp({ error: "Acción desconocida" }, 400);

@@ -48,11 +48,15 @@ sube solo cuando vuelve la conexión.
   gráficas y Excel; no edita) y admin (todo, más usuarios y cierre).
 - **Usuarios:** el admin los crea en la pestaña Admin con usuario y clave.
   Puede cambiar claves, roles y desactivar a quien ya no participe.
+  También puede **eliminar** un usuario: se borra su acceso, pero sus registros
+  se conservan con su nombre. La lista muestra cuántos registros y personas
+  ha subido cada uno.
 - **Cerrar el censo:** pestaña Admin, "Cerrar ingreso de datos". La base de
   datos rechaza desde ese momento cualquier registro nuevo o cambio.
 - **Excel:** pestaña Datos, archivo .xlsx con hojas Resumen, Viviendas y Personas.
 
-Archivos del servidor en `supabase/`: `001_esquema.sql` (tablas y permisos) y
+Archivos del servidor en `supabase/`: `001_esquema.sql` (tablas y permisos),
+`002_eliminar_usuarios.sql` (eliminar usuarios y conteo por censador) y
 `functions/usuarios` (crear y administrar usuarios).
 
 ## Cómo se trabaja en el campo
