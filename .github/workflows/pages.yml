@@ -1,0 +1,44 @@
+name: Publicar versión web (GitHub Pages)
+
+# Publica la carpeta www/ en GitHub Pages cada vez que cambia la app.
+# Solo se publica www/: la carpeta firma/ nunca está en el repositorio.
+on:
+  push:
+    branches: [main]
+    paths: ["www/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Marcar la versión (para que los navegadores reciban la nueva)
+        run: |
+          echo "window.APP_INFO = { version: ${{ github.run_number }}, repo: \"${{ github.repository }}\" };" > www/version.js
+          sed -i "s/const C = \"censo-[^\"]*\"/const C = \"censo-web-${{ github.run_number }}-${GITHUB_SHA::7}\"/" www/sw.js
+          touch www/.nojekyll
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: www
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
